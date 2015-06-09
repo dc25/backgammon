@@ -25,7 +25,7 @@ function cloneToTop(oldEl){
   // remove the original node
   parent.removeChild(oldEl);
   // insert our new node at top (last element drawn is first visible in svg)
-  // parent.appendChild(el);
+  parent.appendChild(el);
   // Tell the world that our new element is at Top
   el.atTop= true;
   return el;
