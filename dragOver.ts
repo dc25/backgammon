@@ -1,5 +1,5 @@
 
-var selectedElement = 0;
+var selectedElement:Element = null;
 var currentX = 0;
 var currentY = 0;
 var cx = 0;
@@ -17,7 +17,7 @@ function cloneToTop(oldEl){
 
   // select all draggable elements, none of them are at top anymore
   var dragEls= oldEl.ownerDocument.documentElement.querySelectorAll('.draggable');
-  for(i=0; i<dragEls.length; i++){
+  for(var i=0; i<dragEls.length; i++){
     dragEls[i].atTop=null;
   }
 
@@ -53,8 +53,8 @@ function moveElement(evt) {
   cx += dx/3.1;
   cy += dy/3.1;
   
-  selectedElement.setAttribute("cx", cx);
-  selectedElement.setAttribute("cy", cy);
+  selectedElement.setAttribute("cx", cx.toString());
+  selectedElement.setAttribute("cy", cy.toString());
 
   currentX = evt.clientX;
   currentY = evt.clientY;
@@ -62,11 +62,11 @@ function moveElement(evt) {
 }
     
 function deselectElement(evt) {
-  if(selectedElement != 0) {
+  if(selectedElement != null) {
       selectedElement.removeAttribute("onmousemove");
       selectedElement.removeAttribute("onmouseout");
       selectedElement.removeAttribute("onmouseup");
-      selectedElement = 0;
+      selectedElement = null;
   }
 }
         
