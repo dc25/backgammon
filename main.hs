@@ -99,7 +99,7 @@ gameStart = zipWith whiteOrBlack whiteStart blackStart
                    whiteOrBlack _ p = p
 
 newGame :: Game
-newGame = Game [Point White 2, Point Black 1]
+newGame = Game gameStart
 
 main :: IO ()
 main = let gameInPlay = newGame
