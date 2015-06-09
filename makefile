@@ -1,6 +1,6 @@
 HASTE_SOURCES = main.hs
 
-TYPESCRIPT_SOURCES = support.ts
+TYPESCRIPT_SOURCES = support.ts dragOver.ts
 JAVASCRIPT_FROM_TYPESCRIPT = $(patsubst %.ts,%.js, $(TYPESCRIPT_SOURCES))
 
 default:all
