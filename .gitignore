@@ -3,4 +3,5 @@
 *.hi
 main/
 main.js
+support.js
 
