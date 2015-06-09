@@ -26,7 +26,7 @@ barGap = 5
 
 drawChecker :: Int -> Int -> Color -> IO ()
 drawChecker pointIndex checkerIndex color = do
-    Just d <- elemById "fullboard" 
+    Just d <- elemById "board" 
     circle <- newElemNS "http://www.w3.org/2000/svg" "circle"
     setAttrNS circle "cx" (show $ xBase + leftDelta)
     setAttrNS circle "cy" (show $ yBase + stackDelta)
