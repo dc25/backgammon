@@ -9,14 +9,13 @@ foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Int -> Int -
 foreign import ccall placeAlert_ffi :: JSString -> IO ()
 foreign import ccall consoleLog_ffi :: JSString -> IO ()
 
-
 -- | Create an element in a namespace.
 newElemNS :: MonadIO m => String -> String -> m Elem
 newElemNS ns tag = liftIO $ jsCreateElemNS  (toJSStr ns) (toJSStr tag)
 
-data Color = Black|White|None
-data Point = Point Color  Int
-data Game = Game [Point]
+data Color = Black|White|None deriving (Eq, Show)
+data Point = Point Color Int
+data Game = Game [Point] Color Color
 
 checkerRadius = 6
 firstUpperLevel = 7
@@ -25,19 +24,18 @@ leftmostPoint = 10
 pointGap = 15
 barGap = 5
 
-drawChecker :: Int -> Int -> Color -> IO ()
-drawChecker pointIndex checkerIndex color = do
+drawChecker :: Color -> Int -> Int -> Color -> IO ()
+drawChecker usersColor pointIndex checkerIndex color = do
     Just d <- elemById "board" 
     circle <- newElemNS "http://www.w3.org/2000/svg" "circle"
     setAttr circle "cx" (show $ xBase + leftDelta)
     setAttr circle "cy" (show $ yBase + stackDelta)
     setAttr circle "r" (show $ checkerRadius)
-    setAttr circle "class" ((svgCheckerClass color) ++ " pi" ++ show pointIndex ++ " ci" ++ show checkerIndex)
-    setAttr circle "onmousedown" "selectElement(evt)"
+    setAttr circle "class" (svgCheckerClass color usersColor pointIndex checkerIndex) 
+    if (usersColor  == color) then (setAttr circle "onmousedown" "selectElement(evt)") else return ()
     addChild circle d
     where 
-      svgCheckerClass White = "draggable whiteChecker"
-      svgCheckerClass Black = "draggable blackChecker"
+      svgCheckerClass color usersColor pi ci = (if (usersColor == color ) then "draggable " else "") ++ show color ++ " pi" ++ show pi ++ " ci" ++ show ci
 
       pointOffset | pointIndex < 12 = 11 - pointIndex
                   | otherwise       = pointIndex - 12
@@ -57,14 +55,14 @@ drawChecker pointIndex checkerIndex color = do
       yBase | pointIndex < 12 = firstLowerLevel
             | otherwise       = firstUpperLevel
 
-drawPoint :: (Int,Point) -> IO ()
-drawPoint (pointIndex, Point color count) = 
-    let drawAtPoint = drawChecker pointIndex
+drawPoint :: Color -> Int -> Point -> IO ()
+drawPoint usersColor pointIndex (Point color count) = 
+    let drawAtPoint = drawChecker usersColor pointIndex
         uncurryDrawAtPoint = uncurry drawAtPoint
     in sequence_ $ map uncurryDrawAtPoint (zip [0..] $ replicate count color) 
 
 drawGame :: Game -> IO ()
-drawGame (Game points) = sequence_ $ map drawPoint $ zip [0..] points
+drawGame (Game points usersColor _) = sequence_ $ map (uncurry (drawPoint usersColor)) $ zip [0..] points
 
 whiteStart=    [Point White 2, 
                 Point None 0,
@@ -100,7 +98,7 @@ gameStart = zipWith whiteOrBlack whiteStart blackStart
                    whiteOrBlack _ p = p
 
 newGame :: Game
-newGame = Game gameStart
+newGame = Game gameStart White White
 
 dropCheckerCallback :: JSString -> Int -> Int -> IO ()
 dropCheckerCallback className x y = consoleLog_ffi  $ toJSStr logStr
