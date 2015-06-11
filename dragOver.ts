@@ -1,5 +1,25 @@
+"use strict";
 
-var selectedElement:Element = null;
+
+// A & B are required by haste for callbacks.  See: 
+// https://github.com/valderman/haste-compiler/blob/master/doc/js-externals.txt
+// for details.
+var A:any;
+var B:any;
+
+// For debugging.
+function showAlert_ffi(msg:string) {
+    alert(msg);
+}
+
+// For debugging.
+function consoleLog_ffi(msg:string) {
+    console.log(msg);
+}
+
+
+
+var selectedElement:SVGElement = null;
 var currentX = 0;
 var currentY = 0;
 var cx = 0;
@@ -61,12 +81,24 @@ function moveElement(evt) {
 
 }
     
+// Provide for callback into haskell when object stops being dragged.
+var dropCheckerCallback;
+
 function deselectElement(evt) {
   if(selectedElement != null) {
       selectedElement.removeAttribute("onmousemove");
       selectedElement.removeAttribute("onmouseout");
       selectedElement.removeAttribute("onmouseup");
+      B(A(dropCheckerCallback, [ [0,selectedElement.getAttribute("class")], 
+                                 [0,selectedElement.getAttribute("cx")], 
+                                 [0,selectedElement.getAttribute("cy")], 
+                                 0]));
       selectedElement = null;
   }
 }
         
+// Called from haskell
+function setDropCheckerCallback_ffi(cb) {
+    dropCheckerCallback = cb;
+}
+
