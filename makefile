@@ -18,3 +18,4 @@ clean:
 	-rm *~
 	-rm *.hi
 	-rm *.o
+	-rm *.js
