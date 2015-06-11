@@ -22,8 +22,6 @@ function consoleLog_ffi(msg:string) {
 var selectedElement:SVGElement = null;
 var currentX = 0;
 var currentY = 0;
-var cx = 0;
-var cy = 0;
 
 function cloneToTop(oldEl){
   // already at top, don't go farther…
@@ -32,8 +30,6 @@ function cloneToTop(oldEl){
 
   // make a copy of this node
   var el = oldEl.cloneNode(true);
-
-  el.setAttribute("class", oldEl.getAttribute("class"));
 
   // select all draggable elements, none of them are at top anymore
   var dragEls= oldEl.ownerDocument.documentElement.querySelectorAll('.draggable');
@@ -51,14 +47,16 @@ function cloneToTop(oldEl){
   return el;
 }
 
+// from http://stackoverflow.com/questions/5898656/test-if-an-element-contains-a-class
+function hasClass(element:SVGElement, cls:String) {
+    return (' ' + element.getAttribute("class") + ' ').indexOf(' ' + cls + ' ') > -1;
+}
 
 function selectElement(evt) {
-  selectedElement = cloneToTop(evt.target);
+  var evtTarget:SVGElement = evt.target
+  selectedElement = cloneToTop(evtTarget);
   currentX = evt.clientX;
   currentY = evt.clientY;
-
-  cx = parseInt(selectedElement.getAttribute("cx"));
-  cy = parseInt(selectedElement.getAttribute("cy"));
 
   selectedElement.setAttribute("onmousemove", "moveElement(evt)");
   selectedElement.setAttribute("onmouseout", "deselectElement(evt)");
@@ -69,6 +67,9 @@ function moveElement(evt) {
 
   var dx = evt.clientX - currentX;
   var dy = evt.clientY - currentY;
+
+  var cx = parseFloat(selectedElement.getAttribute("cx"));
+  var cy = parseFloat(selectedElement.getAttribute("cy"));
 
   cx += dx/3.1;
   cy += dy/3.1;
