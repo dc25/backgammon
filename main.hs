@@ -2,16 +2,17 @@ import Haste.DOM
 import Haste.Prim
 import Control.Monad.IO.Class
 
+-- javascript functionality
 foreign import ccall jsCreateElemNS :: JSString -> JSString -> IO Elem
-foreign import ccall jsSetAttrNS :: Elem -> JSString -> JSString -> IO ()
+
+foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Int -> Int -> IO ()) -> IO ()
+foreign import ccall placeAlert_ffi :: JSString -> IO ()
+foreign import ccall consoleLog_ffi :: JSString -> IO ()
+
 
 -- | Create an element in a namespace.
 newElemNS :: MonadIO m => String -> String -> m Elem
 newElemNS ns tag = liftIO $ jsCreateElemNS  (toJSStr ns) (toJSStr tag)
-
--- | Set an attribute of the given element.
-setAttrNS :: MonadIO m => Elem -> PropID -> String -> m ()
-setAttrNS e prop val = liftIO $ jsSetAttrNS e (toJSStr prop) (toJSStr val)
 
 data Color = Black|White|None
 data Point = Point Color  Int
@@ -28,11 +29,11 @@ drawChecker :: Int -> Int -> Color -> IO ()
 drawChecker pointIndex checkerIndex color = do
     Just d <- elemById "board" 
     circle <- newElemNS "http://www.w3.org/2000/svg" "circle"
-    setAttrNS circle "cx" (show $ xBase + leftDelta)
-    setAttrNS circle "cy" (show $ yBase + stackDelta)
-    setAttrNS circle "r" (show $ checkerRadius)
-    setAttrNS circle "class" (svgCheckerClass color)
-    setAttrNS circle "onmousedown" "selectElement(evt)"
+    setAttr circle "cx" (show $ xBase + leftDelta)
+    setAttr circle "cy" (show $ yBase + stackDelta)
+    setAttr circle "r" (show $ checkerRadius)
+    setAttr circle "class" ((svgCheckerClass color) ++ " pi" ++ show pointIndex ++ " ci" ++ show checkerIndex)
+    setAttr circle "onmousedown" "selectElement(evt)"
     addChild circle d
     where 
       svgCheckerClass White = "draggable whiteChecker"
@@ -101,9 +102,14 @@ gameStart = zipWith whiteOrBlack whiteStart blackStart
 newGame :: Game
 newGame = Game gameStart
 
+dropCheckerCallback :: JSString -> Int -> Int -> IO ()
+dropCheckerCallback className x y = consoleLog_ffi  $ toJSStr logStr
+    where logStr = fromJSStr className ++ " " ++ show x  ++ " " ++ show y
+
 main :: IO ()
 main = let gameInPlay = newGame
        in do drawGame gameInPlay
+             setDropCheckerCallback_ffi $ toPtr dropCheckerCallback
              -- enableSelection gameInPlay 
              -- setCallbacks gameInPlay 
 
