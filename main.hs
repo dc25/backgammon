@@ -2,6 +2,7 @@ import Haste.DOM
 import Haste.Prim
 import Control.Monad.IO.Class
 import Data.String
+import Data.List
 
 -- javascript functionality
 foreign import ccall jsCreateElemNS :: JSString -> JSString -> IO Elem
@@ -19,21 +20,33 @@ data Point = Point Color Int
 data Game = Game [Point] Color Color
 
 checkerRadius = 6
+firstUpperLevel = 7
+firstLowerLevel = 203
+leftmostPoint = 10
+pointGap = 15
+barGap = 5
 
--- coordsToPointIndex :: Float -> Float -> Int
--- coords
+pointXCoords = firstSix ++ secondSix where
+    firstPastBar = leftmostPoint+6*pointGap+barGap
+    firstSix = take 6 [leftmostPoint,leftmostPoint+pointGap..]
+    secondSix = take 6 [firstPastBar,firstPastBar+pointGap..]
+
+coordsToPointIndex :: Float -> Float -> Maybe Int
+coordsToPointIndex x y = 
+    let 
+        -- get the offset in "point count" from the left.
+        lp = findIndex (\px -> abs (fromIntegral px - x) < 7) pointXCoords
+
+        midPoint = (firstUpperLevel + firstLowerLevel) `div` 2
+
+    in if (y > fromIntegral midPoint) then fmap (11-) lp else fmap (12+) lp
+
 
 setCheckerPosition :: Elem -> Int -> Int -> IO ()
 setCheckerPosition circle pointIndex checkerIndex = do
     setAttr circle "cx" (show $ xBase + leftDelta)
     setAttr circle "cy" (show $ yBase + stackDelta)
     where 
-
-      firstUpperLevel = 7
-      firstLowerLevel = 203
-      leftmostPoint = 10
-      pointGap = 15
-      barGap = 5
 
       pointOffset | pointIndex < 12 = 11 - pointIndex -- from lower leftmost point
                   | otherwise       = pointIndex - 12 -- from upper leftmost point
@@ -123,9 +136,14 @@ dropCheckerCallback className x y = do
         ciString = drop 2 $ classes !! 3  -- "ciXX"
         pointIndex = read piString :: Int
         checkerIndex = read ciString :: Int
+        newPointIndex = coordsToPointIndex x y
+        newPoint = case newPointIndex of
+                            Just x -> show x
+                            Nothing -> "NO POINT"
         logStr2 = show pointIndex  ++ " " ++ show checkerIndex ++ " " ++ show x  ++ " " ++ show y 
-        -- newPointIndex = coordsToPointIndex x y
+        logStr3 = "New Point : " ++ newPoint
     consoleLog_ffi  $ toJSStr logStr2
+    consoleLog_ffi  $ toJSStr logStr3
 
 
 
