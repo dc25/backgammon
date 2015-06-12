@@ -19,17 +19,19 @@ data Point = Point Color Int
 data Game = Game [Point] Color Color
 
 checkerRadius = 6
-firstUpperLevel = 7
-firstLowerLevel = 203
-leftmostPoint = 10
-pointGap = 15
-barGap = 5
 
 setCheckerPosition :: Elem -> Int -> Int -> IO ()
 setCheckerPosition circle pointIndex checkerIndex = do
     setAttr circle "cx" (show $ xBase + leftDelta)
     setAttr circle "cy" (show $ yBase + stackDelta)
     where 
+
+      firstUpperLevel = 7
+      firstLowerLevel = 203
+      leftmostPoint = 10
+      pointGap = 15
+      barGap = 5
+
       pointOffset | pointIndex < 12 = 11 - pointIndex -- from lower leftmost point
                   | otherwise       = pointIndex - 12 -- from upper leftmost point
 
