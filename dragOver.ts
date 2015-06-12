@@ -17,8 +17,6 @@ function consoleLog_ffi(msg:string) {
     console.log(msg);
 }
 
-
-
 var selectedElement:SVGElement = null;
 var currentX = 0;
 var currentY = 0;
