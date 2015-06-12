@@ -6,7 +6,7 @@ import Data.String
 -- javascript functionality
 foreign import ccall jsCreateElemNS :: JSString -> JSString -> IO Elem
 
-foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Int -> Int -> IO ()) -> IO ()
+foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Float -> Float -> IO ()) -> IO ()
 foreign import ccall placeAlert_ffi :: JSString -> IO ()
 foreign import ccall consoleLog_ffi :: JSString -> IO ()
 
@@ -19,6 +19,9 @@ data Point = Point Color Int
 data Game = Game [Point] Color Color
 
 checkerRadius = 6
+
+-- coordsToPointIndex :: Float -> Float -> Int
+-- coords
 
 setCheckerPosition :: Elem -> Int -> Int -> IO ()
 setCheckerPosition circle pointIndex checkerIndex = do
@@ -113,17 +116,17 @@ gameStart = zipWith whiteOrBlack whiteStart blackStart
 newGame :: Game
 newGame = Game gameStart White White
 
-dropCheckerCallback :: JSString -> Int -> Int -> IO ()
+dropCheckerCallback :: JSString -> Float -> Float -> IO ()
 dropCheckerCallback className x y = do
-    let logStr = fromJSStr className ++ " " ++ show x  ++ " " ++ show y
-    consoleLog_ffi  $ toJSStr logStr
     let classes = words $ fromJSStr className
         piString = drop 2 $ classes !! 2    -- "piXX"
         ciString = drop 2 $ classes !! 3  -- "ciXX"
         pointIndex = read piString :: Int
         checkerIndex = read ciString :: Int
-        logStr2 = show pointIndex  ++ " " ++ show checkerIndex
+        logStr2 = show pointIndex  ++ " " ++ show checkerIndex ++ " " ++ show x  ++ " " ++ show y 
+        -- newPointIndex = coordsToPointIndex x y
     consoleLog_ffi  $ toJSStr logStr2
+
 
 
 main :: IO ()

@@ -91,8 +91,8 @@ function deselectElement(evt) {
       selectedElement.removeAttribute("onmouseout");
       selectedElement.removeAttribute("onmouseup");
       B(A(dropCheckerCallback, [ [0,selectedElement.getAttribute("class")], 
-                                 [0,selectedElement.getAttribute("cx")], 
-                                 [0,selectedElement.getAttribute("cy")], 
+                                 [0,parseFloat(selectedElement.getAttribute("cx"))], 
+                                 [0,parseFloat(selectedElement.getAttribute("cy"))], 
                                  0]));
       selectedElement = null;
   }
