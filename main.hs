@@ -22,7 +22,11 @@ data Point = Point { checkerColor :: Color
                    , checkerCount ::  Int
                    } deriving (Show)
 
-data Game = Game [Point] Color Color
+data Game = Game {
+               gamePoints :: [Point] 
+               , usersColor :: Color 
+               , playersColor :: Color
+            } deriving (Show)
 
 checkerRadius = 6
 firstUpperLevel = 7
@@ -148,32 +152,49 @@ gameStart = zipWith whiteOrBlack whiteStart blackStart
 newGame :: Game
 newGame = Game gameStart White White
 
+updateGame :: Game -> Int -> Int -> Game
+updateGame g@(Game points _ _) iFrom iTo = 
+
+    -- could this be improved with lens?
+    let doMove f t (i,pt)
+          | (i == f) = Point (checkerColor pt) (checkerCount pt -1)
+          | (i == t)   = Point (checkerColor pt) (checkerCount pt +1)
+          | otherwise    = pt
+                
+    in g {gamePoints = (map (doMove iFrom iTo) (zip [0..] points)) }
+
+
 dropCheckerCallback :: Game -> JSString -> Float -> Float -> IO ()
-dropCheckerCallback (Game points _ _) className x y = do
+dropCheckerCallback g@(Game points usersColor _) className x y = do
     let classes = words $ fromJSStr className
 
         -- extract point index and checker index from class string
         piString = drop 2 $ classes !! 2    -- "piXX"
         ciString = drop 2 $ classes !! 3    -- "ciXX"
 
-        pointIndex = read piString :: Int
-        checkerIndex = read ciString :: Int
+        oldPointIndex = read piString :: Int
+        oldCheckerIndex = read ciString :: Int
 
         -- convert placement coords to newPointIndex and newCheckerIndex
         -- newPointIndex and newCheckerIndex are both: Maybe Int 
         newPointIndex = coordsToPointIndex x y
         newCheckerIndex = checkerCount <$> ((!!) points) <$> newPointIndex 
 
-    checker <- getCheckerElement pointIndex checkerIndex
-    case newCheckerIndex of
-        Just c -> setCheckerPosition checker (fromMaybe 0 newPointIndex) c
-        Nothing -> setCheckerPosition checker pointIndex checkerIndex
+    checker <- getCheckerElement oldPointIndex oldCheckerIndex
+    case (newPointIndex,newCheckerIndex) of
+        (Just p, Just c) -> do 
+            let ng = updateGame g oldPointIndex p
+            setCheckerPosition checker p c
+            setCheckerClass checker usersColor p c usersColor
+            setCallbacks ng
+        _ -> do
+            setCheckerPosition checker oldPointIndex oldCheckerIndex
+            setCallbacks g
 
-
+setCallbacks :: Game -> IO ()
+setCallbacks g = setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback g)
 
 main :: IO ()
-main = let gameInPlay = newGame
-       in do drawGame gameInPlay
-             setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback gameInPlay)
-             -- setCallbacks gameInPlay 
+main = do drawGame newGame
+          setCallbacks newGame
 
