@@ -3,6 +3,8 @@ import Haste.Prim
 import Control.Monad.IO.Class
 import Data.String
 import Data.List
+import Data.Maybe
+import Control.Applicative
 
 -- javascript functionality
 foreign import ccall jsCreateElemNS :: JSString -> JSString -> IO Elem
@@ -73,6 +75,11 @@ setCheckerPosition circle pointIndex checkerIndex = do
       yBase | pointIndex < 12 = firstLowerLevel       -- vertical position on board
             | otherwise       = firstUpperLevel
 
+checkerPositionClass :: Int -> Int -> String 
+checkerPositionClass pi ci = 
+       " pi" ++ show pi -- point index
+    ++ " ci" ++ show ci -- checker index
+
 setCheckerClass :: Elem -> Color -> Int -> Int -> Color -> IO ()
 setCheckerClass circle usersColor pointIndex checkerIndex color = 
     setAttr circle "class" (svgCheckerClass color usersColor pointIndex checkerIndex) 
@@ -80,8 +87,13 @@ setCheckerClass circle usersColor pointIndex checkerIndex color =
       svgCheckerClass color usersColor pi ci = 
           (if (usersColor == color ) then "draggable " else "") -- can only move your own checkers
           ++ show color 
-          ++ " pi" ++ show pi -- point index
-          ++ " ci" ++ show ci -- checker index
+          ++ checkerPositionClass pi ci
+
+getCheckerElement :: MonadIO m => Int -> Int -> m Elem
+
+getCheckerElement pointIndex checkerIndex = do
+    elems <- elemsByClass $ checkerPositionClass pointIndex checkerIndex 
+    return (elems !! 0)
 
 drawChecker :: Color -> Int -> Int -> Color -> IO ()
 drawChecker usersColor pointIndex checkerIndex color = do
@@ -139,26 +151,23 @@ newGame = Game gameStart White White
 dropCheckerCallback :: Game -> JSString -> Float -> Float -> IO ()
 dropCheckerCallback (Game points _ _) className x y = do
     let classes = words $ fromJSStr className
+
+        -- extract point index and checker index from class string
         piString = drop 2 $ classes !! 2    -- "piXX"
         ciString = drop 2 $ classes !! 3    -- "ciXX"
+
         pointIndex = read piString :: Int
         checkerIndex = read ciString :: Int
+
+        -- convert placement coords to newPointIndex and newCheckerIndex
+        -- newPointIndex and newCheckerIndex are both: Maybe Int 
         newPointIndex = coordsToPointIndex x y
-        newCheckerIndex = fmap checkerCount $ fmap ((!!) points) newPointIndex
-        newPoint = case newPointIndex of
-                            Just x -> show x
-                            Nothing -> "NO POINT"
-        newChecker = case newCheckerIndex of
-                            Just x -> show x
-                            Nothing -> "NO CHECKER"
-        logStr2 = show pointIndex  ++ " " ++ show checkerIndex ++ " " ++ show x  ++ " " ++ show y 
-        logStr3 = "New Point : " ++ newPoint
-        logStr4 = "New Checker : " ++ newChecker
-        -- checker = getCheckerElement pointIndex checkerIndex
-        -- moveCheckerTo = checker newPointIndex (points !! newPointIndex)
-    consoleLog_ffi  $ toJSStr logStr2
-    consoleLog_ffi  $ toJSStr logStr3
-    consoleLog_ffi  $ toJSStr logStr4
+        newCheckerIndex = checkerCount <$> ((!!) points) <$> newPointIndex 
+
+    checker <- getCheckerElement pointIndex checkerIndex
+    case newCheckerIndex of
+        Just c -> setCheckerPosition checker (fromMaybe 0 newPointIndex) c
+        Nothing -> setCheckerPosition checker pointIndex checkerIndex
 
 
 
