@@ -35,11 +35,13 @@ leftmostPoint = 10
 pointGap = 15
 barGap = 5
 
+-- List of x coordinates of points relative to lhs.
 pointXCoords = firstSix ++ secondSix where
     firstPastBar = leftmostPoint+6*pointGap+barGap
     firstSix = take 6 [leftmostPoint,leftmostPoint+pointGap..]
     secondSix = take 6 [firstPastBar,firstPastBar+pointGap..]
 
+-- Used to determine which point a checker was dropped on.
 coordsToPointIndex :: Float -> Float -> Maybe Int
 coordsToPointIndex x y = 
     let 
@@ -54,7 +56,8 @@ coordsToPointIndex x y =
 
     in fmap adjustment lp  -- fmap over Maybe
 
-
+-- Given a checker element, move it to the spot specified
+-- by the pointIndex and checkerIndex.
 setCheckerPosition :: Elem -> Int -> Int -> IO ()
 setCheckerPosition circle pointIndex checkerIndex = do
     setAttr circle "cx" (show $ xBase + leftDelta)
@@ -183,10 +186,9 @@ dropCheckerCallback g@(Game points usersColor _) className x y = do
     checker <- getCheckerElement oldPointIndex oldCheckerIndex
     case (newPointIndex,newCheckerIndex) of
         (Just p, Just c) -> do 
-            let ng = updateGame g oldPointIndex p
             setCheckerPosition checker p c
             setCheckerClass checker usersColor p c usersColor
-            setCallbacks ng
+            setCallbacks $ updateGame g oldPointIndex p
         _ -> do
             setCheckerPosition checker oldPointIndex oldCheckerIndex
             setCallbacks g
