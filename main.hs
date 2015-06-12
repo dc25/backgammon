@@ -16,7 +16,10 @@ newElemNS :: MonadIO m => String -> String -> m Elem
 newElemNS ns tag = liftIO $ jsCreateElemNS  (toJSStr ns) (toJSStr tag)
 
 data Color = Black|White|None deriving (Eq, Show)
-data Point = Point Color Int
+data Point = Point { checkerColor :: Color
+                   , checkerCount ::  Int
+                   } deriving (Show)
+
 data Game = Game [Point] Color Color
 
 checkerRadius = 6
@@ -39,7 +42,11 @@ coordsToPointIndex x y =
 
         midPoint = (firstUpperLevel + firstLowerLevel) `div` 2
 
-    in if (y > fromIntegral midPoint) then fmap (11-) lp else fmap (12+) lp
+        -- Adjustment to apply to get the actual point index.
+        -- Depends on whether selection is on bottom or top of board
+        adjustment = if (y > fromIntegral midPoint) then (11-) else (12+) 
+
+    in fmap adjustment lp  -- fmap over Maybe
 
 
 setCheckerPosition :: Elem -> Int -> Int -> IO ()
@@ -129,27 +136,35 @@ gameStart = zipWith whiteOrBlack whiteStart blackStart
 newGame :: Game
 newGame = Game gameStart White White
 
-dropCheckerCallback :: JSString -> Float -> Float -> IO ()
-dropCheckerCallback className x y = do
+dropCheckerCallback :: Game -> JSString -> Float -> Float -> IO ()
+dropCheckerCallback (Game points _ _) className x y = do
     let classes = words $ fromJSStr className
         piString = drop 2 $ classes !! 2    -- "piXX"
-        ciString = drop 2 $ classes !! 3  -- "ciXX"
+        ciString = drop 2 $ classes !! 3    -- "ciXX"
         pointIndex = read piString :: Int
         checkerIndex = read ciString :: Int
         newPointIndex = coordsToPointIndex x y
+        newCheckerIndex = fmap checkerCount $ fmap ((!!) points) newPointIndex
         newPoint = case newPointIndex of
                             Just x -> show x
                             Nothing -> "NO POINT"
+        newChecker = case newCheckerIndex of
+                            Just x -> show x
+                            Nothing -> "NO CHECKER"
         logStr2 = show pointIndex  ++ " " ++ show checkerIndex ++ " " ++ show x  ++ " " ++ show y 
         logStr3 = "New Point : " ++ newPoint
+        logStr4 = "New Checker : " ++ newChecker
+        -- checker = getCheckerElement pointIndex checkerIndex
+        -- moveCheckerTo = checker newPointIndex (points !! newPointIndex)
     consoleLog_ffi  $ toJSStr logStr2
     consoleLog_ffi  $ toJSStr logStr3
+    consoleLog_ffi  $ toJSStr logStr4
 
 
 
 main :: IO ()
 main = let gameInPlay = newGame
        in do drawGame gameInPlay
-             setDropCheckerCallback_ffi $ toPtr dropCheckerCallback
+             setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback gameInPlay)
              -- setCallbacks gameInPlay 
 
