@@ -173,12 +173,8 @@ dropCheckerCallback g@(Game points usersColor _) className x y = do
                 moveChecker oldPoint oldChecker newPoint newChecker usersColor
                 fixCheckersAtPoint g oldPoint oldChecker
                 setCallbacks $ updateGame g oldPoint newPoint
-            else do -- not a legal move so put the checker back where it was.
-                moveChecker oldPoint oldChecker oldPoint oldChecker usersColor
-                setCallbacks g
-        _ -> do -- attempt to move to a non-point location
-            moveChecker oldPoint oldChecker oldPoint oldChecker usersColor
-            setCallbacks g
+            else moveChecker oldPoint oldChecker oldPoint oldChecker usersColor
+        _ -> moveChecker oldPoint oldChecker oldPoint oldChecker usersColor
 
 setCallbacks :: Game -> IO ()
 setCallbacks g = setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback g)
