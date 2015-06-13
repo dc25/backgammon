@@ -8,7 +8,6 @@ import Control.Applicative
 
 -- javascript functionality
 foreign import ccall jsCreateElemNS :: JSString -> JSString -> IO Elem
-
 foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Float -> Float -> IO ()) -> IO ()
 foreign import ccall placeAlert_ffi :: JSString -> IO ()
 foreign import ccall consoleLog_ffi :: JSString -> IO ()
@@ -58,7 +57,7 @@ coordsToPointIndex x y =
 
 -- Given a checker element, move it to the spot specified
 -- by the pointIndex and checkerIndex.
-setCheckerPosition :: Elem -> Int -> Int -> IO ()
+setCheckerPosition :: MonadIO m => Elem -> Int -> Int -> m ()
 setCheckerPosition circle pointIndex checkerIndex = do
     setAttr circle "cx" (show $ xBase + leftDelta)
     setAttr circle "cy" (show $ yBase + stackDelta)
@@ -83,11 +82,9 @@ setCheckerPosition circle pointIndex checkerIndex = do
             | otherwise       = firstUpperLevel
 
 checkerPositionClass :: Int -> Int -> String 
-checkerPositionClass pi ci = 
-       " pi" ++ show pi -- point index
-    ++ " ci" ++ show ci -- checker index
+checkerPositionClass pi ci = " pi" ++ show pi ++ " ci" ++ show ci 
 
-setCheckerClass :: Elem -> Color -> Int -> Int -> Color -> IO ()
+setCheckerClass :: MonadIO m => Elem -> Color -> Int -> Int -> Color -> m ()
 setCheckerClass circle usersColor pointIndex checkerIndex color = 
     setAttr circle "class" (svgCheckerClass color usersColor pointIndex checkerIndex) 
     where 
@@ -97,7 +94,6 @@ setCheckerClass circle usersColor pointIndex checkerIndex color =
           ++ checkerPositionClass pi ci
 
 getCheckerElement :: MonadIO m => Int -> Int -> m Elem
-
 getCheckerElement pointIndex checkerIndex = do
     elems <- elemsByClass $ checkerPositionClass pointIndex checkerIndex 
     return (elems !! 0)
@@ -157,15 +153,26 @@ newGame = Game gameStart White White
 
 updateGame :: Game -> Int -> Int -> Game
 updateGame g@(Game points _ _) iFrom iTo = 
-
     -- could this be improved with lens?
-    let doMove f t (i,pt)
+    let fromColor = checkerColor $ points !! iFrom
+        doMove f t (i,pt)
           | (i == f) = Point (checkerColor pt) (checkerCount pt -1)
-          | (i == t)   = Point (checkerColor pt) (checkerCount pt +1)
+          | (i == t)   = Point fromColor (checkerCount pt +1)
           | otherwise    = pt
                 
     in g {gamePoints = (map (doMove iFrom iTo) (zip [0..] points)) }
 
+moveChecker :: MonadIO m => Int -> Int -> Int -> Int -> Color -> m ()
+moveChecker oldPoint oldChecker newPoint newChecker color = do
+    checker <- getCheckerElement oldPoint oldChecker
+    setCheckerPosition checker newPoint newChecker  
+    setCheckerClass checker color newPoint newChecker color
+
+-- slide all of the checkers at a given point together.
+fixCheckersAtPoint :: MonadIO m => Game -> Int -> Int -> m ()
+fixCheckersAtPoint (Game points userColor _ ) pointIndex missingCheckerIndex = do
+    let moveIndices = drop 1 [missingCheckerIndex .. checkerCount (points !! pointIndex)-1]
+    sequence_ [moveChecker pointIndex i pointIndex (i-1) userColor | i <- moveIndices ]
 
 dropCheckerCallback :: Game -> JSString -> Float -> Float -> IO ()
 dropCheckerCallback g@(Game points usersColor _) className x y = do
@@ -175,23 +182,34 @@ dropCheckerCallback g@(Game points usersColor _) className x y = do
         piString = drop 2 $ classes !! 2    -- "piXX"
         ciString = drop 2 $ classes !! 3    -- "ciXX"
 
-        oldPointIndex = read piString :: Int
-        oldCheckerIndex = read ciString :: Int
+        oldPoint = read piString :: Int
+        oldChecker = read ciString :: Int
 
-        -- convert placement coords to newPointIndex and newCheckerIndex
-        -- newPointIndex and newCheckerIndex are both: Maybe Int 
-        newPointIndex = coordsToPointIndex x y
-        newCheckerIndex = checkerCount <$> ((!!) points) <$> newPointIndex 
+        -- convert placement coords to maybeNewPoint and maybeNewChecker
+        -- maybeNewPoint and maybeNewChecker are both: Maybe Int 
+        maybeNewPoint = coordsToPointIndex x y
+        maybeNewChecker = checkerCount <$> ((!!) points) <$> maybeNewPoint 
 
-    checker <- getCheckerElement oldPointIndex oldCheckerIndex
-    case (newPointIndex,newCheckerIndex) of
-        (Just p, Just c) -> do 
-            setCheckerPosition checker p c
-            setCheckerClass checker usersColor p c usersColor
-            setCallbacks $ updateGame g oldPointIndex p
-        _ -> do
-            setCheckerPosition checker oldPointIndex oldCheckerIndex
+
+    case (maybeNewPoint,maybeNewChecker) of
+        (Just newPoint, Just newChecker) -> do 
+
+            let newColor = checkerColor $ points !! newPoint
+                oldColor = checkerColor $ points !! oldPoint
+                newCount = checkerCount $ points !! newPoint
+                legalMove = newPoint > oldPoint && (newColor == oldColor || newCount < 2)
+
+            if legalMove then do
+                moveChecker oldPoint oldChecker newPoint newChecker usersColor
+                fixCheckersAtPoint g oldPoint oldChecker
+                setCallbacks $ updateGame g oldPoint newPoint
+            else do -- not a legal move so put the checker back where it was.
+                moveChecker oldPoint oldChecker oldPoint oldChecker usersColor
+                setCallbacks g
+        _ -> do -- attempt to move to a non-point location
+            moveChecker oldPoint oldChecker oldPoint oldChecker usersColor
             setCallbacks g
+
 
 setCallbacks :: Game -> IO ()
 setCallbacks g = setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback g)
