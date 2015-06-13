@@ -55,31 +55,37 @@ coordsToPointIndex x y =
 
     in fmap adjustment lp  -- fmap over Maybe
 
+checkerPosition :: Int -> Int -> (Int,Int)
+checkerPosition pointIndex checkerIndex = 
+    let pointOffset | pointIndex < 12 = 11 - pointIndex -- from lower leftmost point
+                    | otherwise       = pointIndex - 12 -- from upper leftmost point
+  
+        barGapUsed | pointOffset < 6 = 0                -- left side of board
+                   | otherwise       = barGap           -- right side of board
+  
+        leftDelta = barGapUsed + pointOffset * pointGap -- distance in horizonatal "board units"
+  
+        stackDirection | pointIndex < 12 = -1           -- stacking up
+                       | otherwise       = 1            -- stacking down
+  
+        stackDelta = stackDirection*checkerIndex*2*checkerRadius -- distance in vertical "board units"
+  
+        xBase = leftmostPoint                           -- horizontal position on board
+  
+        yBase | pointIndex < 12 = firstLowerLevel       -- vertical position on board
+              | otherwise       = firstUpperLevel
+  
+        cx = xBase + leftDelta
+        cy = yBase + stackDelta
+    in (cx,cy)
+
 -- Given a checker element, move it to the spot specified
 -- by the pointIndex and checkerIndex.
 setCheckerPosition :: MonadIO m => Elem -> Int -> Int -> m ()
 setCheckerPosition circle pointIndex checkerIndex = do
-    setAttr circle "cx" (show $ xBase + leftDelta)
-    setAttr circle "cy" (show $ yBase + stackDelta)
-    where 
-
-      pointOffset | pointIndex < 12 = 11 - pointIndex -- from lower leftmost point
-                  | otherwise       = pointIndex - 12 -- from upper leftmost point
-
-      barGapUsed | pointOffset < 6 = 0                -- left side of board
-                 | otherwise       = barGap           -- right side of board
-
-      leftDelta = barGapUsed + pointOffset * pointGap -- distance in horizonatal "board units"
-
-      stackDirection | pointIndex < 12 = -1           -- stacking up
-                     | otherwise       = 1            -- stacking down
-
-      stackDelta = stackDirection*checkerIndex*2*checkerRadius -- distance in vertical "board units"
-
-      xBase = leftmostPoint                           -- horizontal position on board
-
-      yBase | pointIndex < 12 = firstLowerLevel       -- vertical position on board
-            | otherwise       = firstUpperLevel
+    let (cx,cy) = checkerPosition pointIndex checkerIndex
+    setAttr circle "cx" $ show cx
+    setAttr circle "cy" $ show cy
 
 checkerPositionClass :: Int -> Int -> String 
 checkerPositionClass pi ci = " pi" ++ show pi ++ " ci" ++ show ci 
