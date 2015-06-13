@@ -121,42 +121,6 @@ drawPoint usersColor pointIndex (Point color count) =
 drawGame :: Game -> IO ()
 drawGame (Game points usersColor _) = sequence_ $ map (uncurry (drawPoint usersColor)) $ zip [0..] points
 
-whiteStart=    [Point White 2, 
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point White 5,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point White 3,
-                Point None 0,
-                Point White 5,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0 ]
-
-blackStart = map whiteToBlack $ reverse whiteStart
-             where whiteToBlack (Point White c) = Point Black c
-                   whiteToBlack p = p
-
-gameStart = zipWith whiteOrBlack whiteStart blackStart
-             where whiteOrBlack p@(Point White c) _ = p
-                   whiteOrBlack _ p = p
-
-newGame :: Game
-newGame = Game gameStart White White
-
 updateGame :: Game -> Int -> Int -> Game
 updateGame g@(Game points _ _) iFrom iTo = 
     -- could this be improved with lens?
@@ -216,9 +180,43 @@ dropCheckerCallback g@(Game points usersColor _) className x y = do
             moveChecker oldPoint oldChecker oldPoint oldChecker usersColor
             setCallbacks g
 
-
 setCallbacks :: Game -> IO ()
 setCallbacks g = setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback g)
+
+whiteStart=    [Point White 2, 
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point White 5,
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point White 3,
+                Point None 0,
+                Point White 5,
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point None 0,
+                Point None 0 ]
+
+blackStart = map whiteToBlack $ reverse whiteStart
+             where whiteToBlack (Point White c) = Point Black c
+                   whiteToBlack p = p
+
+gameStart = zipWith whiteOrBlack whiteStart blackStart
+             where whiteOrBlack p@(Point White c) _ = p
+                   whiteOrBlack _ p = p
+newGame :: Game
+newGame = Game gameStart White White
 
 main :: IO ()
 main = do drawGame newGame
