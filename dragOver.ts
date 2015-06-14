@@ -1,3 +1,5 @@
+///<reference path="velocity-animate/velocity-animate.d.ts" />
+
 "use strict";
 
 
@@ -101,3 +103,6 @@ function setDropCheckerCallback_ffi(cb) {
     dropCheckerCallback = cb;
 }
 
+function animateCircle_ffi (elem, cx, cy, duration) {
+    $(elem).velocity({ cx: cx, cy: cy }, { duration: duration });
+}

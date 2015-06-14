@@ -11,10 +11,16 @@ foreign import ccall jsCreateElemNS :: JSString -> JSString -> IO Elem
 foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Float -> Float -> IO ()) -> IO ()
 foreign import ccall placeAlert_ffi :: JSString -> IO ()
 foreign import ccall consoleLog_ffi :: JSString -> IO ()
+foreign import ccall animateCircle_ffi :: Elem -> Int -> Int -> Int -> IO ()
 
 -- | Create an element in a namespace.
 newElemNS :: MonadIO m => String -> String -> m Elem
 newElemNS ns tag = liftIO $ jsCreateElemNS  (toJSStr ns) (toJSStr tag)
+
+-- | 
+jsAnimateCircle :: MonadIO m => Elem -> Int -> Int -> Int -> m ()
+jsAnimateCircle e cx cy duration = liftIO $ animateCircle_ffi e cx cy duration
+
 
 data Color = Black|White|None deriving (Eq, Show)
 data Point = Point { checkerColor :: Color
@@ -87,6 +93,13 @@ setCheckerPosition circle pointIndex checkerIndex = do
     setAttr circle "cx" $ show cx
     setAttr circle "cy" $ show cy
 
+-- Given a checker element, move it to the spot specified
+-- by the pointIndex and checkerIndex.
+animateToCheckerPosition :: MonadIO m => Elem -> Int -> Int -> m ()
+animateToCheckerPosition circle pointIndex checkerIndex = do
+    let (cx,cy) = checkerPosition pointIndex checkerIndex
+    jsAnimateCircle circle cx cy 300
+
 checkerPositionClass :: Int -> Int -> String 
 checkerPositionClass pi ci = " pi" ++ show pi ++ " ci" ++ show ci 
 
@@ -135,13 +148,13 @@ updateGame g@(Game points _ _) iFrom iTo =
 moveChecker :: MonadIO m => Int -> Int -> Int -> Int -> Color -> m ()
 moveChecker oldPoint oldChecker newPoint newChecker color = do
     checker <- getCheckerElement oldPoint oldChecker
-    setCheckerPosition checker newPoint newChecker  
+    animateToCheckerPosition checker newPoint newChecker  
     setCheckerClass checker color newPoint newChecker color
 
 -- slide all of the checkers at a given point together.
 fixCheckersAtPoint :: MonadIO m => Game -> Int -> Int -> m ()
 fixCheckersAtPoint (Game points userColor _ ) pointIndex missingCheckerIndex = do
-    let moveIndices = drop 1 [missingCheckerIndex .. checkerCount (points !! pointIndex)-1]
+    let moveIndices = drop 1 [missingCheckerIndex .. checkerCount (points !! pointIndex)]
     sequence_ [moveChecker pointIndex i pointIndex (i-1) userColor | i <- moveIndices ]
 
 dropCheckerCallback :: Game -> JSString -> Float -> Float -> IO ()
@@ -170,9 +183,10 @@ dropCheckerCallback g@(Game points usersColor _) className x y = do
                 legalMove = newPoint > oldPoint && (newColor == oldColor || newCount < 2)
 
             if legalMove then do
+                let newGame = updateGame g oldPoint newPoint
                 moveChecker oldPoint oldChecker newPoint newChecker usersColor
-                fixCheckersAtPoint g oldPoint oldChecker
-                setCallbacks $ updateGame g oldPoint newPoint
+                fixCheckersAtPoint newGame oldPoint oldChecker
+                setCallbacks newGame
             else moveChecker oldPoint oldChecker oldPoint oldChecker usersColor
         _ -> moveChecker oldPoint oldChecker oldPoint oldChecker usersColor
 
