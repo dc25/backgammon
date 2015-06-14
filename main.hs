@@ -17,7 +17,7 @@ foreign import ccall animateCircle_ffi :: Elem -> Int -> Int -> Int -> IO ()
 newElemNS :: MonadIO m => String -> String -> m Elem
 newElemNS ns tag = liftIO $ jsCreateElemNS  (toJSStr ns) (toJSStr tag)
 
--- | 
+-- | Slide a circle to the given location.  
 jsAnimateCircle :: MonadIO m => Elem -> Int -> Int -> Int -> m ()
 jsAnimateCircle e cx cy duration = liftIO $ animateCircle_ffi e cx cy duration
 
@@ -61,6 +61,7 @@ coordsToPointIndex x y =
 
     in fmap adjustment lp  -- fmap over Maybe
 
+-- Convert from point/checker indieces to appropriate center placement
 checkerPosition :: Int -> Int -> (Int,Int)
 checkerPosition pointIndex checkerIndex = 
     let pointOffset | pointIndex < 12 = 11 - pointIndex -- from lower leftmost point
@@ -117,6 +118,7 @@ getCheckerElement pointIndex checkerIndex = do
     elems <- elemsByClass $ checkerPositionClass pointIndex checkerIndex 
     return (elems !! 0)
 
+-- Create and place a single checker on specified point
 drawChecker :: Color -> Int -> Int -> Color -> IO ()
 drawChecker usersColor pointIndex checkerIndex color = do
     Just d <- elemById "board" 
@@ -127,13 +129,16 @@ drawChecker usersColor pointIndex checkerIndex color = do
     if (usersColor  == color) then (setAttr circle "onmousedown" "selectElement(evt)") else return ()
     addChild circle d
 
+-- Create and draw all the checkers for a given point.
 drawPoint :: Color -> Int -> Point -> IO ()
 drawPoint usersColor pointIndex (Point color count) =
     sequence_ $ map (uncurry $ drawChecker usersColor pointIndex) (zip [0..] $ replicate count color) 
 
+-- Create and draw all the checkers for all the points for a game.
 drawGame :: Game -> IO ()
 drawGame (Game points usersColor _) = sequence_ $ map (uncurry (drawPoint usersColor)) $ zip [0..] points
 
+-- Given a game and a move, create the resulting new game.
 updateGame :: Game -> Int -> Int -> Game
 updateGame g@(Game points _ _) iFrom iTo = 
     -- could this be improved with lens?
@@ -145,6 +150,7 @@ updateGame g@(Game points _ _) iFrom iTo =
                 
     in g {gamePoints = (map (doMove iFrom iTo) (zip [0..] points)) }
 
+-- Given a game and a move, create the resulting new game.
 moveChecker :: MonadIO m => Int -> Int -> Int -> Int -> Color -> m ()
 moveChecker oldPoint oldChecker newPoint newChecker color = do
     checker <- getCheckerElement oldPoint oldChecker
@@ -172,7 +178,6 @@ dropCheckerCallback g@(Game points usersColor _) className x y = do
         -- maybeNewPoint and maybeNewChecker are both: Maybe Int 
         maybeNewPoint = coordsToPointIndex x y
         maybeNewChecker = checkerCount <$> ((!!) points) <$> maybeNewPoint 
-
 
     case (maybeNewPoint,maybeNewChecker) of
         (Just newPoint, Just newChecker) -> do 
