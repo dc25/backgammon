@@ -61,7 +61,7 @@ coordsToPointIndex x y =
 
     in fmap adjustment lp  -- fmap over Maybe
 
--- Convert from point/checker indieces to appropriate center placement
+-- Convert from point/checker indices to appropriate center placement
 checkerPosition :: Int -> Int -> (Int,Int)
 checkerPosition pointIndex checkerIndex = 
     let pointOffset | pointIndex < 12 = 11 - pointIndex -- from lower leftmost point
