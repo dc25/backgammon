@@ -47,35 +47,21 @@ function cloneToTop(oldEl){
   return el;
 }
 
-// from http://stackoverflow.com/questions/5898656/test-if-an-element-contains-a-class
-function hasClass(element:SVGElement, cls:String) {
-    return (' ' + element.getAttribute("class") + ' ').indexOf(' ' + cls + ' ') > -1;
-}
-
 function selectElement(evt) {
   var evtTarget:SVGElement = evt.target
   selectedElement = cloneToTop(evtTarget);
-  currentX = evt.clientX;
-  currentY = evt.clientY;
-
 }
     
 function moveElement(evt) {
 
-  var dx = evt.clientX - currentX;
-  var dy = evt.clientY - currentY;
-
   var cx = parseFloat(selectedElement.getAttribute("cx"));
   var cy = parseFloat(selectedElement.getAttribute("cy"));
 
-  cx += dx/3.1;
-  cy += dy/3.1;
+  cx += evt.dx/3.1;
+  cy += evt.dy/3.1;
   
   selectedElement.setAttribute("cx", cx.toString());
   selectedElement.setAttribute("cy", cy.toString());
-
-  currentX = evt.clientX;
-  currentY = evt.clientY;
 
 }
     
