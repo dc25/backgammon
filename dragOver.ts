@@ -103,6 +103,7 @@ function setDropCheckerCallback_ffi(cb) {
     dropCheckerCallback = cb;
 }
 
+// Use velocity.js to slide a circle to a point.
 function animateCircle_ffi (elem, cx, cy, duration) {
     $(elem).velocity({ cx: cx, cy: cy }, { duration: duration });
 }
