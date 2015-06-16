@@ -126,7 +126,7 @@ drawChecker usersColor pointIndex checkerIndex color = do
     setAttr circle "r" (show $ checkerRadius)
     setCheckerPosition circle pointIndex checkerIndex
     setCheckerClass circle usersColor pointIndex checkerIndex color 
-    if (usersColor  == color) then (setAttr circle "onmousedown" "selectElement(evt)") else return ()
+    -- if (usersColor  == color) then (setAttr circle "onmousedown" "selectElement(evt)") else return ()
     addChild circle d
 
 -- Create and draw all the checkers for a given point.

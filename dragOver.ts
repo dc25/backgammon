@@ -1,4 +1,5 @@
 ///<reference path="velocity-animate/velocity-animate.d.ts" />
+///<reference path="interactjs/interact.d.ts" />
 
 "use strict";
 
@@ -58,9 +59,6 @@ function selectElement(evt) {
   currentX = evt.clientX;
   currentY = evt.clientY;
 
-  selectedElement.setAttribute("onmousemove", "moveElement(evt)");
-  selectedElement.setAttribute("onmouseout", "deselectElement(evt)");
-  selectedElement.setAttribute("onmouseup", "deselectElement(evt)");
 }
     
 function moveElement(evt) {
@@ -87,21 +85,29 @@ var dropCheckerCallback;
 
 function deselectElement(evt) {
   if(selectedElement != null) {
-      selectedElement.removeAttribute("onmousemove");
-      selectedElement.removeAttribute("onmouseout");
-      selectedElement.removeAttribute("onmouseup");
       B(A(dropCheckerCallback, [ [0,selectedElement.getAttribute("class")], 
-                                 [0,parseFloat(selectedElement.getAttribute("cx"))], 
-                                 [0,parseFloat(selectedElement.getAttribute("cy"))], 
+                                 [0,parseFloat(selectedElement.getAttribute("cx"))],
+                                 [0,parseFloat(selectedElement.getAttribute("cy"))],
                                  0]));
       selectedElement = null;
   }
 }
-        
+
 // Called from haskell
 function setDropCheckerCallback_ffi(cb) {
     dropCheckerCallback = cb;
+
+    // target elements with the "draggable" class
+    interact('.draggable')
+      .draggable({
+        onstart: selectElement,
+        onmove: moveElement,
+        onend: deselectElement
+      });
 }
+
+
+
 
 // Use velocity.js to slide a circle to a point.
 function animateCircle_ffi (elem, cx, cy, duration) {
