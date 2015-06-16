@@ -3,7 +3,6 @@
 
 "use strict";
 
-
 // A & B are required by haste for callbacks.  See: 
 // https://github.com/valderman/haste-compiler/blob/master/doc/js-externals.txt
 // for details.
@@ -105,9 +104,6 @@ function setDropCheckerCallback_ffi(cb) {
         onend: deselectElement
       });
 }
-
-
-
 
 // Use velocity.js to slide a circle to a point.
 function animateCircle_ffi (elem, cx, cy, duration) {
