@@ -49,7 +49,7 @@
 
       <div class="row">
         <div class="col-md-7">
-            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="600" height="700">
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="740" height="700">
               <defs>
 
                 <style type="text/css"><![CDATA[
@@ -71,7 +71,7 @@
 
                 ]]></style>
 
-                <polygon stroke="black" stroke-width="1" points="0,0, 10,0, 5,100" id="tri"/>
+                <polygon stroke="#404040" stroke-width="1" points="0,0, 10,0, 5,100" id="tri"/>
                 <!-- Symbol Description -->
                 <symbol id="lightDark">
                   <use xlink:href="#tri" fill="yellow" x="0" y="0" transform="scale(1.00, 0.90)"/>
@@ -87,14 +87,25 @@
 
                 <!-- Symbol Description -->
                 <symbol id="halfboard">
-                  <polygon stroke="black" fill="#E0E0E0" stroke-width="2" points="0,0, 95,0, 95,210, 0,210"/>
+                  <polygon stroke="#404040" fill="#E0E0E0" stroke-width="2" points="0,0, 95,0, 95,210, 0,210"/>
                   <use xlink:href="#quadrant" />
                   <use xlink:href="#quadrant" transform="translate(95,210) rotate(180)"/>
                 </symbol>
 
+                <symbol id="centerbar">
+                  <polygon stroke="#404040" fill="#E0E0E0" stroke-width="1" points="0,0, 15,0, 15,210, 0,210"/>
+                </symbol>
+
+                <symbol id="sidebar">
+                  <polygon stroke="#404040" fill="#C0C0C0" stroke-width="2" points="0,0, 15,0, 15,210, 0,210"/>
+                </symbol>
+
                 <symbol id="fullboard">
-                  <use xlink:href="#halfboard" />
-                  <use xlink:href="#halfboard" transform="translate(95,0)"/>
+                  <use xlink:href="#sidebar" transform="translate(0,0)"/>
+                  <use xlink:href="#halfboard" transform="translate(15,0)"/>
+                  <use xlink:href="#centerbar" transform="translate(110,0)"/>
+                  <use xlink:href="#halfboard" transform="translate(125,0)"/>
+                  <use xlink:href="#sidebar" transform="translate(220,0)"/>
                 </symbol>
 
               </defs>

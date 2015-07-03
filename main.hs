@@ -36,9 +36,9 @@ data Game = Game {
 checkerRadius = 6
 firstUpperLevel = 7
 firstLowerLevel = 203
-leftmostPoint = 10
+leftmostPoint = 25
 pointGap = 15
-barGap = 5
+barGap = 5+15
 
 -- List of x coordinates of points relative to lhs.
 pointXCoords = firstSix ++ secondSix where
