@@ -4,78 +4,135 @@
 <title>Backgammon!</title>
 <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" />
 <body>
-<span> 
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="600" height="700">
-  <defs>
-
-    <style type="text/css"><![CDATA[
-        .draggable {
-            cursor: move;
-        }
-
-        .White {
-            fill: white;
-            stroke: black;
-            stroke-width: .5
-        }
-
-        .Black {
-            fill: #606060;
-            stroke: black;
-            stroke-width: .5
-        }
-
-    ]]></style>
-
-    <polygon stroke="black" stroke-width="1" points="0,0, 10,0, 5,100" id="tri"/>
-    <!-- Symbol Description -->
-    <symbol id="lightDark">
-      <use xlink:href="#tri" fill="yellow" x="0" y="0" transform="scale(1.00, 0.90)"/>
-      <use xlink:href="#tri" fill="brown" x="15" y="0" />
-    </symbol>
-
-    <!-- Symbol Description -->
-    <symbol id="quadrant">
-      <use xlink:href="#lightDark" x="05" y="0" />
-      <use xlink:href="#lightDark" x="35" y="0" />
-      <use xlink:href="#lightDark" x="65" y="0" />
-    </symbol>
-
-    <!-- Symbol Description -->
-    <symbol id="halfboard">
-      <polygon stroke="black" fill="#E0E0E0" stroke-width="2" points="0,0, 95,0, 95,210, 0,210"/>
-      <use xlink:href="#quadrant" />
-      <use xlink:href="#quadrant" transform="translate(95,210) rotate(180)"/>
-    </symbol>
-
-    <symbol id="fullboard">
-      <use xlink:href="#halfboard" />
-      <use xlink:href="#halfboard" transform="translate(95,0)"/>
-    </symbol>
-
-  </defs>
-
-  <!-- Symbol Usage -->
-  <g id="board" transform="scale(3.1)" >
-      <use xlink:href="#fullboard"  />
-  </g>
 
 
-</svg>
-<div><textarea id="transcript" cols="50" rows="5"> </textarea> </div>
-<div><input id="sharedKey" type="text" value="X" /> </div>
-<div><input id="chatInput" type="text" value="say 'hi'" /> </div>
-</span>
+    <div class="container-fluid">
 
-</body>
-<script src="support.js"></script>
-<script src="dragOver.js"></script>
-<script src="main.js"></script>
-<script src="adapter.js"></script>
-<script src="webrtc.js"></script>
-<script src="doConnect.js"></script>
-<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.2/velocity.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/interact.js/1.2.4/interact.min.js"></script>
-<script src='https://cdn.firebase.com/v0/firebase.js'></script>
+      <!-- Static navbar -->
+      <nav class="navbar navbar-default">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Backgammon!</a>
+          </div>
+          <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li><a href="#">About</a></li>
+              <li><a href="#">Contact</a></li>
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                  <li><a href="#">Action</a></li>
+                  <li><a href="#">Another action</a></li>
+                  <li><a href="#">Something else here</a></li>
+                  <li role="separator" class="divider"></li>
+                  <li class="dropdown-header">Nav header</li>
+                  <li><a href="#">Separated link</a></li>
+                  <li><a href="#">One more separated link</a></li>
+                </ul>
+              </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li class="active"><a href="./">Default <span class="sr-only">(current)</span></a></li>
+              <li><a href="../navbar-static-top/">Static top</a></li>
+              <li><a href="../navbar-fixed-top/">Fixed top</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div><!--/.container-fluid -->
+      </nav>
+
+      <div class="row">
+        <div class="col-md-7">
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="600" height="700">
+              <defs>
+
+                <style type="text/css"><![CDATA[
+                    .draggable {
+                        cursor: move;
+                    }
+
+                    .White {
+                        fill: white;
+                        stroke: black;
+                        stroke-width: .5
+                    }
+
+                    .Black {
+                        fill: #606060;
+                        stroke: black;
+                        stroke-width: .5
+                    }
+
+                ]]></style>
+
+                <polygon stroke="black" stroke-width="1" points="0,0, 10,0, 5,100" id="tri"/>
+                <!-- Symbol Description -->
+                <symbol id="lightDark">
+                  <use xlink:href="#tri" fill="yellow" x="0" y="0" transform="scale(1.00, 0.90)"/>
+                  <use xlink:href="#tri" fill="brown" x="15" y="0" />
+                </symbol>
+
+                <!-- Symbol Description -->
+                <symbol id="quadrant">
+                  <use xlink:href="#lightDark" x="05" y="0" />
+                  <use xlink:href="#lightDark" x="35" y="0" />
+                  <use xlink:href="#lightDark" x="65" y="0" />
+                </symbol>
+
+                <!-- Symbol Description -->
+                <symbol id="halfboard">
+                  <polygon stroke="black" fill="#E0E0E0" stroke-width="2" points="0,0, 95,0, 95,210, 0,210"/>
+                  <use xlink:href="#quadrant" />
+                  <use xlink:href="#quadrant" transform="translate(95,210) rotate(180)"/>
+                </symbol>
+
+                <symbol id="fullboard">
+                  <use xlink:href="#halfboard" />
+                  <use xlink:href="#halfboard" transform="translate(95,0)"/>
+                </symbol>
+
+              </defs>
+
+              <!-- Symbol Usage -->
+              <g id="board" transform="scale(3.1)" >
+                  <use xlink:href="#fullboard"  />
+              </g>
+
+
+            </svg>
+        </div>
+        <div class="col-md-5">
+            <div><textarea id="transcript" cols="50" rows="5"> </textarea> </div>
+            <div><input id="sharedKey" type="text" value="X" /> </div>
+            <div><input id="chatInput" type="text" value="say 'hi'" /> </div>
+
+        </div>
+      </div>
+
+    </div> <!-- /container -->
+
+
+
+
+
+
+
+
+        </body>
+        <script src="support.js"></script>
+        <script src="dragOver.js"></script>
+        <script src="main.js"></script>
+        <script src="adapter.js"></script>
+        <script src="webrtc.js"></script>
+        <script src="doConnect.js"></script>
+        <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.2/velocity.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/interact.js/1.2.4/interact.min.js"></script>
+        <script src='https://cdn.firebase.com/v0/firebase.js'></script>
