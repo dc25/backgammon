@@ -7,10 +7,12 @@ import Data.Maybe
 import Control.Applicative
 
 -- javascript functionality
-foreign import ccall jsCreateElemNS :: JSString -> JSString -> IO Elem
-foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Float -> Float -> IO ()) -> IO ()
+
 foreign import ccall placeAlert_ffi :: JSString -> IO ()
 foreign import ccall consoleLog_ffi :: JSString -> IO ()
+
+foreign import ccall jsCreateElemNS :: JSString -> JSString -> IO Elem
+foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Float -> Float -> IO ()) -> IO ()
 foreign import ccall animateCircle_ffi :: Elem -> Int -> Int -> Int -> IO ()
 
 -- | Create an element in a namespace.
