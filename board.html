@@ -109,22 +109,39 @@
         </div>
         <div class="col-md-5">
 
-            <form class="form-horizontal">
+            <form class="form-horizontal" role=form>
+
               <div class="form-group">
-                <label for="inputGame" class="col-md-3 control-label">Game ID:</label>
-                <div class="col-md-6">
+                <div class="col-md-2">
+                    <label for="inputGame" class="control-label">Game:</label>
+                </div>
+                <div class="col-md-8">
                   <input type="text" class="form-control" id="sharedKey" placeholder="Game ID">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <button type="submit" class="btn btn-default" id="joinGame">Join</button>
                 </div>
               </div>
+
               <div class="form-group">
+                <div class="col-md-2">
+                    <label for="transcript" class="control-label">Log:</label>
+                </div>
+                <div class="col-md-10">
+                    <textarea class="form-control" id="transcript" > </textarea> 
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="col-md-2">
+                    <label for="chatInput" class="control-label">Chat:</label>
+                </div>
+                <div class="col-md-10">
+                    <input type="text" class="form-control" id="chatInput" value="say 'hi'" > 
+                </div>
               </div>
             </form>
-            <hr>
-            <div><textarea id="transcript" cols="50" rows="5"> </textarea> </div>
-            <div><input id="chatInput" type="text" value="say 'hi'" /> </div>
+
         </div>
       </div>
 
