@@ -57,30 +57,30 @@ coordsToPointIndex x y =
 
         -- Adjustment to apply to get the actual point index.
         -- Depends on whether selection is on bottom or top of board
-        adjustment = if (y > fromIntegral midPoint) then (11-) else (12+) 
+        adjustment = if (y > fromIntegral midPoint) then (23-) else (0+) 
 
     in fmap adjustment lp  -- fmap over Maybe
 
 -- Convert from point/checker indices to appropriate center placement
 checkerPosition :: Int -> Int -> (Int,Int)
 checkerPosition pointIndex checkerIndex = 
-    let pointOffset | pointIndex < 12 = 11 - pointIndex -- from lower leftmost point
-                    | otherwise       = pointIndex - 12 -- from upper leftmost point
+    let pointOffset | pointIndex < 12 =      pointIndex -- from lower leftmost point
+                    | otherwise       = 23 - pointIndex  -- from upper leftmost point
   
         barGapUsed | pointOffset < 6 = 0                -- left side of board
                    | otherwise       = barGap           -- right side of board
   
         leftDelta = barGapUsed + pointOffset * pointGap -- distance in horizonatal "board units"
   
-        stackDirection | pointIndex < 12 = -1           -- stacking up
-                       | otherwise       = 1            -- stacking down
+        stackDirection | pointIndex < 12 = 1           -- stacking up
+                       | otherwise       = -1            -- stacking down
   
         stackDelta = stackDirection*checkerIndex*2*checkerRadius -- distance in vertical "board units"
   
         xBase = leftmostPoint                           -- horizontal position on board
   
-        yBase | pointIndex < 12 = firstLowerLevel       -- vertical position on board
-              | otherwise       = firstUpperLevel
+        yBase | pointIndex < 12 = firstUpperLevel       -- vertical position on board
+              | otherwise       = firstLowerLevel
   
         cx = xBase + leftDelta
         cy = yBase + stackDelta
@@ -126,7 +126,6 @@ drawChecker usersColor pointIndex checkerIndex color = do
     setAttr circle "r" (show $ checkerRadius)
     setCheckerPosition circle pointIndex checkerIndex
     setCheckerClass circle usersColor pointIndex checkerIndex color 
-    -- if (usersColor  == color) then (setAttr circle "onmousedown" "selectElement(evt)") else return ()
     addChild circle d
 
 -- Create and draw all the checkers for a given point.
