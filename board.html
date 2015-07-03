@@ -108,34 +108,27 @@
             </svg>
         </div>
         <div class="col-md-5">
-            <div><textarea id="transcript" cols="50" rows="5"> </textarea> </div>
-            <div><input id="sharedKey" type="text" value="X" /> </div>
-            <div><input id="chatInput" type="text" value="say 'hi'" /> </div>
 
             <form class="form-horizontal">
               <div class="form-group">
                 <label for="inputGame" class="col-md-3 control-label">Game ID:</label>
                 <div class="col-md-6">
-                  <input type="email" class="form-control" id="inputGame" placeholder="Game ID">
+                  <input type="text" class="form-control" id="sharedKey" placeholder="Game ID">
                 </div>
                 <div class="col-md-3">
-                  <button type="submit" class="btn btn-default">Join</button>
+                  <button type="submit" class="btn btn-default" id="joinGame">Join</button>
                 </div>
               </div>
               <div class="form-group">
               </div>
             </form>
+            <hr>
+            <div><textarea id="transcript" cols="50" rows="5"> </textarea> </div>
+            <div><input id="chatInput" type="text" value="say 'hi'" /> </div>
         </div>
       </div>
 
     </div> <!-- /container -->
-
-
-
-
-
-
-
 
         </body>
         <script src="support.js"></script>
