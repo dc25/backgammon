@@ -8,20 +8,22 @@ import Control.Applicative
 
 -- javascript functionality
 
+-- debugging
 foreign import ccall placeAlert_ffi :: JSString -> IO ()
 foreign import ccall consoleLog_ffi :: JSString -> IO ()
 
-foreign import ccall jsCreateElemNS :: JSString -> JSString -> IO Elem
-foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Float -> Float -> IO ()) -> IO ()
-foreign import ccall animateCircle_ffi :: Elem -> Int -> Int -> Int -> IO ()
-
 -- | Create an element in a namespace.
+foreign import ccall jsCreateElemNS :: JSString -> JSString -> IO Elem
 newElemNS :: MonadIO m => String -> String -> m Elem
 newElemNS ns tag = liftIO $ jsCreateElemNS  (toJSStr ns) (toJSStr tag)
 
 -- | Slide a circle to the given location.  
+foreign import ccall animateCircle_ffi :: Elem -> Int -> Int -> Int -> IO ()
 jsAnimateCircle :: MonadIO m => Elem -> Int -> Int -> Int -> m ()
 jsAnimateCircle e cx cy duration = liftIO $ animateCircle_ffi e cx cy duration
+
+foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Float -> Float -> IO ()) -> IO ()
+
 
 
 data Color = Black|White|None deriving (Eq, Show)
