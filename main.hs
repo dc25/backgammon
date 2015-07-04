@@ -30,7 +30,7 @@ data Placement =     PointPlacement { pointIndex :: Int, onPointIndex :: Int }
                    | BarPlacement { onBarIndex :: Int }
                    | SidePlacement  { side :: SideSelection, onSideIndex :: Int } deriving Show
 
-data Color = Black|White|None deriving (Eq, Show)
+data Color = Black|White deriving (Eq, Show)
 data Point = Point { checkerColor :: Color
                    , checkerCount ::  Int
                    } deriving (Show)
@@ -209,38 +209,15 @@ dropCheckerCallback g@(Game points wot bot wob bob usersColor _) className x y =
 setCallbacks :: Game -> IO ()
 setCallbacks g = setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback g)
 
-whiteStart=    [Point White 2, 
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point White 5,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point White 3,
-                Point None 0,
-                Point White 5,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0,
-                Point None 0 ]
+whiteStart = [ Point White sc | sc <- [2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0]]
 
 blackStart = map whiteToBlack $ reverse whiteStart
              where whiteToBlack (Point White c) = Point Black c
                    whiteToBlack p = p
 
 gameStart = zipWith whiteOrBlack whiteStart blackStart
-             where whiteOrBlack p@(Point White c) _ = p
-                   whiteOrBlack _ p = p
+             where whiteOrBlack (Point White 0) b = b
+                   whiteOrBlack w@(Point White _) _ = w
 newGame :: Game
 newGame = Game gameStart 0 0 0 0 White White
 
