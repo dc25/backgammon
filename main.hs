@@ -36,9 +36,11 @@ data Point = Point { checkerColor :: Color
                    } deriving (Show)
 
 data Game = Game {
-               gamePoints :: [Point] 
-               , leftSideCount :: Int
-               , rightSideCount :: Int
+                 gamePoints :: [Point] 
+               , whiteOffTable :: Int
+               , blackOffTable :: Int
+               , whiteOnBar :: Int
+               , blackOnBar :: Int
                , usersColor :: Color 
                , playersColor :: Color
             } deriving (Show)
@@ -145,11 +147,11 @@ drawPoint usersColor pointIndex (Point color count) =
 
 -- Create and draw all the checkers for all the points for a game.
 drawGame :: Game -> IO ()
-drawGame (Game points lsc rsc usersColor _) = sequence_ $ map (uncurry (drawPoint usersColor)) $ zip [0..] points
+drawGame (Game points wot bot wob bob usersColor _) = sequence_ $ map (uncurry (drawPoint usersColor)) $ zip [0..] points
 
 -- Given a game and a move, create the resulting new game.
 updateGame :: Game -> Int -> Int -> Game
-updateGame g@(Game points lsc rsc _ _) iFrom iTo = 
+updateGame g@(Game points wot bot wob bob _ _) iFrom iTo = 
     -- could this be improved with lens?
     let fromColor = checkerColor $ points !! iFrom
         doMove f t (i,pt)
@@ -168,12 +170,12 @@ moveChecker oldPoint oldChecker newPoint newChecker color = do
 
 -- slide all of the checkers at a given point together.
 fixCheckersAtPoint :: MonadIO m => Game -> Int -> Int -> m ()
-fixCheckersAtPoint (Game points lsc rsc userColor _ ) pointIndex missingCheckerIndex = do
+fixCheckersAtPoint (Game points wot bot wob bob userColor _ ) pointIndex missingCheckerIndex = do
     let moveIndices = drop 1 [missingCheckerIndex .. checkerCount (points !! pointIndex)]
     sequence_ [moveChecker pointIndex i pointIndex (i-1) userColor | i <- moveIndices ]
 
 dropCheckerCallback :: Game -> JSString -> Float -> Float -> IO ()
-dropCheckerCallback g@(Game points lsc rsc usersColor _) className x y = do
+dropCheckerCallback g@(Game points wot bot wob bob usersColor _) className x y = do
     let classes = words $ fromJSStr className
 
         -- extract point index and checker index from class string
@@ -240,7 +242,7 @@ gameStart = zipWith whiteOrBlack whiteStart blackStart
              where whiteOrBlack p@(Point White c) _ = p
                    whiteOrBlack _ p = p
 newGame :: Game
-newGame = Game gameStart 0 0 White White
+newGame = Game gameStart 0 0 0 0 White White
 
 main :: IO ()
 main = do drawGame newGame
