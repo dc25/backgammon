@@ -24,7 +24,11 @@ jsAnimateCircle e cx cy duration = liftIO $ animateCircle_ffi e cx cy duration
 
 foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Float -> Float -> IO ()) -> IO ()
 
+data SideSelection = LeftSide | RightSide deriving Show
 
+data Placement =     PointPlacement { pointIndex :: Int, onPointIndex :: Int } 
+                   | BarPlacement { onBarIndex :: Int }
+                   | SidePlacement  { side :: SideSelection, onSideIndex :: Int } deriving Show
 
 data Color = Black|White|None deriving (Eq, Show)
 data Point = Point { checkerColor :: Color
@@ -33,6 +37,8 @@ data Point = Point { checkerColor :: Color
 
 data Game = Game {
                gamePoints :: [Point] 
+               , leftSideCount :: Int
+               , rightSideCount :: Int
                , usersColor :: Color 
                , playersColor :: Color
             } deriving (Show)
@@ -139,11 +145,11 @@ drawPoint usersColor pointIndex (Point color count) =
 
 -- Create and draw all the checkers for all the points for a game.
 drawGame :: Game -> IO ()
-drawGame (Game points usersColor _) = sequence_ $ map (uncurry (drawPoint usersColor)) $ zip [0..] points
+drawGame (Game points lsc rsc usersColor _) = sequence_ $ map (uncurry (drawPoint usersColor)) $ zip [0..] points
 
 -- Given a game and a move, create the resulting new game.
 updateGame :: Game -> Int -> Int -> Game
-updateGame g@(Game points _ _) iFrom iTo = 
+updateGame g@(Game points lsc rsc _ _) iFrom iTo = 
     -- could this be improved with lens?
     let fromColor = checkerColor $ points !! iFrom
         doMove f t (i,pt)
@@ -162,12 +168,12 @@ moveChecker oldPoint oldChecker newPoint newChecker color = do
 
 -- slide all of the checkers at a given point together.
 fixCheckersAtPoint :: MonadIO m => Game -> Int -> Int -> m ()
-fixCheckersAtPoint (Game points userColor _ ) pointIndex missingCheckerIndex = do
+fixCheckersAtPoint (Game points lsc rsc userColor _ ) pointIndex missingCheckerIndex = do
     let moveIndices = drop 1 [missingCheckerIndex .. checkerCount (points !! pointIndex)]
     sequence_ [moveChecker pointIndex i pointIndex (i-1) userColor | i <- moveIndices ]
 
 dropCheckerCallback :: Game -> JSString -> Float -> Float -> IO ()
-dropCheckerCallback g@(Game points usersColor _) className x y = do
+dropCheckerCallback g@(Game points lsc rsc usersColor _) className x y = do
     let classes = words $ fromJSStr className
 
         -- extract point index and checker index from class string
@@ -234,7 +240,7 @@ gameStart = zipWith whiteOrBlack whiteStart blackStart
              where whiteOrBlack p@(Point White c) _ = p
                    whiteOrBlack _ p = p
 newGame :: Game
-newGame = Game gameStart White White
+newGame = Game gameStart 0 0 White White
 
 main :: IO ()
 main = do drawGame newGame
