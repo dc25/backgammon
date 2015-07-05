@@ -67,10 +67,10 @@ coordsToPlacement (Game points _ _ _ _ _ _) x y =
 
         -- Adjustment to apply to get the actual point index.
         -- Depends on whether selection is on bottom or top of board
-        adjustment = if (y > fromIntegral midPoint) then (23-) else (0+) 
+        adjustment = if y > fromIntegral midPoint then (23-) else (0+) 
 
         maybePointIndex = fmap adjustment lp  -- fmap over Maybe
-        maybeCheckerIndex = checkerCount <$> ((!!) points) <$> maybePointIndex
+        maybeCheckerIndex = checkerCount <$> (points !! ) <$> maybePointIndex
 
     in case (maybePointIndex, maybeCheckerIndex) of  -- is there a better way to do this?
         (Just pointIndex, Just checkerIndex) -> Just $ PointPlacement pointIndex checkerIndex
@@ -124,21 +124,21 @@ setCheckerClass circle usersColor placement color =
     setAttr circle "class" (svgCheckerClass color usersColor placement) 
     where 
       svgCheckerClass color usersColor pl = 
-          (if (usersColor == color ) then "draggable " else "") -- can only move your own checkers
+          (if usersColor == color then "draggable " else "") -- can only move your own checkers
           ++ show color ++ " "
           ++ checkerPositionClass pl
 
 getCheckerElement :: MonadIO m => Placement -> m Elem
 getCheckerElement pl = do
     elems <- elemsByClass $ checkerPositionClass pl
-    return (elems !! 0)
+    return $ head elems
 
 -- Create and place a single checker on specified point
 drawChecker :: Color -> Color -> Placement -> IO ()
 drawChecker usersColor color pl = do
     Just d <- elemById "board" 
     circle <- newElemNS "http://www.w3.org/2000/svg" "circle"
-    setAttr circle "r" (show $ checkerRadius)
+    setAttr circle "r" (show checkerRadius)
     setCheckerPosition circle pl
     setCheckerClass circle usersColor pl color 
     addChild circle d
@@ -146,7 +146,7 @@ drawChecker usersColor color pl = do
 -- Create and draw all the checkers for a given point.
 drawPoint :: Color -> Int -> Point -> IO ()
 drawPoint usersColor pointIndex (Point color count) =
-    sequence_ $ [drawChecker usersColor color (PointPlacement pointIndex checkerIndex) | checkerIndex <- take count [0..]]
+    sequence_ [drawChecker usersColor color (PointPlacement pointIndex checkerIndex) | checkerIndex <- take count [0..]]
 
 -- Create and draw all the checkers for a given side.
 -- Side is identified by color - white checkers go on left.
@@ -156,8 +156,8 @@ drawSide color usersColor count  =
 
 -- Create and draw all the checkers sitting on both sides for a game.
 drawGame :: Game -> IO ()
-drawGame (Game points wos bos wob bob usersColor _) = do
-        sequence_ $ map (uncurry (drawPoint usersColor)) $ zip [0..] points
+drawGame (Game points wos bos wob bob usersColor _) = 
+        sequence_ $ zipWith (drawPoint usersColor) [0 ..] points
         -- drawSide White usersColor wos 
         -- drawSide Black usersColor bos 
 
@@ -171,7 +171,7 @@ updateGame g@(Game points wos bos wob bob _ _) iFrom iTo =
           | (i == t)   = Point fromColor (checkerCount pt +1)
           | otherwise    = pt
                 
-    in g {gamePoints = (map (doMove iFrom iTo) (zip [0..] points)) }
+    in g {gamePoints = map (doMove iFrom iTo) (zip [0..] points) }
 
 -- Given a game and a move, create the resulting new game.
 moveChecker :: MonadIO m => Placement -> Placement -> Color -> m ()
@@ -199,7 +199,7 @@ dropCheckerCallback g@(Game points wos bos wob bob usersColor _) className x y =
         maybeNewPlacement = coordsToPlacement g x y
 
     case (oldPlacement, maybeNewPlacement) of
-        ((PointPlacement oldPoint oldChecker), (Just (PointPlacement newPoint newChecker))) -> do 
+        (PointPlacement oldPoint oldChecker, Just (PointPlacement newPoint newChecker)) -> do 
 
             let newColor = checkerColor $ points !! newPoint
                 newCount = checkerCount $ points !! newPoint
