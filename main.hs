@@ -26,7 +26,8 @@ foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Float -> Flo
 
 data Placement =     PointPlacement { pointIndex :: Int, onPointIndex :: Int } 
                    | BarPlacement { onBarIndex :: Int }
-                   | SidePlacement  { onSideIndex :: Int } deriving (Show,Read)
+                   | LeftSidePlacement  { onSideIndex :: Int } 
+                   | RightSidePlacement  { onSideIndex :: Int } deriving (Show,Read)
 
 data Color = Black|White deriving (Eq, Show, Read)
 data Point = Point { checkerColor :: Color
@@ -46,15 +47,17 @@ data Game = Game {
 checkerRadius = 6
 firstUpperLevel = 7
 firstLowerLevel = 203
-leftmostPoint = 25
-pointGap = 15
-barGap = 5+15
+sideWidth = 15
+leftmostPoint = sideWidth + 10
+barWidth = 15
+pointWidth = 15
+barGap = 5 + barWidth
 
 -- List of x coordinates of points relative to lhs.
 pointXCoords = firstSix ++ secondSix where
-    firstPastBar = leftmostPoint+6*pointGap+barGap
-    firstSix = take 6 [leftmostPoint,leftmostPoint+pointGap..]
-    secondSix = take 6 [firstPastBar,firstPastBar+pointGap..]
+    firstPastBar = leftmostPoint+6*pointWidth+barGap
+    firstSix = take 6 [leftmostPoint,leftmostPoint+pointWidth..]
+    secondSix = take 6 [firstPastBar,firstPastBar+pointWidth..]
 
 -- Used to determine where on the board a checker was dropped
 coordsToPlacement :: Game -> Float -> Float -> Maybe Placement
@@ -85,7 +88,7 @@ checkerPosition (PointPlacement pointIndex checkerIndex) =
         barGapUsed | pointOffset < 6 = 0                -- left side of board
                    | otherwise       = barGap           -- right side of board
   
-        leftDelta = barGapUsed + pointOffset * pointGap -- distance in horizonatal "board units"
+        leftDelta = barGapUsed + pointOffset * pointWidth -- distance in horizonatal "board units"
   
         stackDirection | pointIndex < 12 = 1           -- stacking up
                        | otherwise       = -1            -- stacking down
@@ -100,6 +103,12 @@ checkerPosition (PointPlacement pointIndex checkerIndex) =
         cx = xBase + leftDelta
         cy = yBase + stackDelta
     in (cx,cy)
+
+checkerPosition (LeftSidePlacement checkerIndex) = 
+        (sideWidth `div` 2,firstLowerLevel -checkerIndex*2*checkerRadius )
+
+checkerPosition (RightSidePlacement checkerIndex) = 
+        (sideWidth+2*(5+(6*pointWidth))+barWidth+(sideWidth `div` 2),firstLowerLevel -checkerIndex*2*checkerRadius )
 
 -- Given a checker element, move it to the spot specified
 -- by the pointIndex and checkerIndex.
@@ -152,14 +161,15 @@ drawPoint usersColor pointIndex (Point color count) =
 -- Side is identified by color - white checkers go on left.
 drawSide :: Color -> Color -> Int -> IO ()
 drawSide color usersColor count  =
-    sequence_ [drawChecker usersColor color (SidePlacement i) | i <- take count [0..]]
+    let pl = if color == White then LeftSidePlacement else RightSidePlacement
+    in sequence_ [drawChecker usersColor color (pl i) | i <- take count [0..]]
 
 -- Create and draw all the checkers sitting on both sides for a game.
 drawGame :: Game -> IO ()
-drawGame (Game points wos bos wob bob usersColor _) = 
-        sequence_ $ zipWith (drawPoint usersColor) [0 ..] points
-        -- drawSide White usersColor wos 
-        -- drawSide Black usersColor bos 
+drawGame (Game points wos bos wob bob usersColor _) = do
+        -- sequence_ $ zipWith (drawPoint usersColor) [0 ..] points
+        drawSide White usersColor wos 
+        drawSide Black usersColor bos 
 
 -- Given a game and a move, create the resulting new game.
 updateGame :: Game -> Int -> Int -> Game
@@ -218,7 +228,8 @@ dropCheckerCallback g@(Game points wos bos wob bob usersColor _) className x y =
 setCallbacks :: Game -> IO ()
 setCallbacks g = setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback g)
 
-whiteStart = [ Point White sc | sc <- [2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0]]
+initialPointCounts = [2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0]
+whiteStart = [ Point White sc | sc <- initialPointCounts ]
 
 blackStart = map whiteToBlack $ reverse whiteStart
              where whiteToBlack (Point White c) = Point Black c
@@ -228,7 +239,7 @@ gameStart = zipWith whiteOrBlack whiteStart blackStart
              where whiteOrBlack (Point White 0) b = b
                    whiteOrBlack w@(Point White _) _ = w
 newGame :: Game
-newGame = Game gameStart 0 0 0 0 White White
+newGame = Game gameStart (sum initialPointCounts) (sum initialPointCounts) 0 0 White White
 
 main :: IO ()
 main = do drawGame newGame
