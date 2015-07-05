@@ -194,17 +194,18 @@ dropCheckerCallback g@(Game points wos bos wob bob usersColor _) className x y =
         placementString =  map (\c -> if c=='_' then ' '; else c) (classes !! 2) 
         oldPlacement = read placementString :: Placement
 
+        -- extract color from classes
         oldColor =  read (classes !! 1) :: Color
 
+        -- Get new placement from mouse pick coords
         maybeNewPlacement = coordsToPlacement g x y
 
     case (oldPlacement, maybeNewPlacement) of
-        (PointPlacement oldPoint oldChecker, Just (PointPlacement newPoint newChecker)) -> do 
+        (PointPlacement oldPoint oldChecker, Just newPlacement@(PointPlacement newPoint newChecker)) -> do 
 
             let newColor = checkerColor $ points !! newPoint
                 newCount = checkerCount $ points !! newPoint
                 legalMove = newPoint > oldPoint && (newColor == oldColor || newCount < 2)
-                newPlacement = PointPlacement newPoint newChecker
 
             if legalMove then do
                 let newGame = updateGame g oldPoint newPoint
@@ -213,7 +214,6 @@ dropCheckerCallback g@(Game points wos bos wob bob usersColor _) className x y =
                 setCallbacks newGame
             else moveChecker oldPlacement oldPlacement usersColor
         _ -> moveChecker oldPlacement oldPlacement usersColor
-        where 
 
 setCallbacks :: Game -> IO ()
 setCallbacks g = setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback g)
