@@ -6,6 +6,8 @@ import Data.List
 import Data.Maybe
 import Control.Applicative
 
+import P2P
+
 -- javascript functionality
 
 -- debugging

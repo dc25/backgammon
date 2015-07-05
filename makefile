@@ -1,6 +1,6 @@
-HASTE_SOURCES = main.hs
+HASTE_SOURCES = main.hs P2P.hs
 
-TYPESCRIPT_SOURCES = support.ts dragOver.ts doConnect.ts webrtc.ts
+TYPESCRIPT_SOURCES = webrtc.ts support.ts dragOver.ts doConnect.ts jsConnect.ts
 JAVASCRIPT_FROM_TYPESCRIPT = $(patsubst %.ts,%.js, $(TYPESCRIPT_SOURCES))
 
 default:all
