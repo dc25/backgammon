@@ -241,7 +241,15 @@ gameStart = zipWith whiteOrBlack whiteStart blackStart
 newGame :: Game
 newGame = Game gameStart (sum initialPointCounts) (sum initialPointCounts) 0 0 White White
 
+setHint :: MonadIO m => String -> m ()
+setHint s = do
+        maybeElem <- elemById "HintText"
+        case maybeElem of
+            (Just el) -> setProp el "innerHTML" s
+            _ -> return ()
+
 main :: IO ()
-main = do drawGame newGame
+main = do setHint "You have not joined a game (yet)."
+          drawGame newGame
           setCallbacks newGame
 
