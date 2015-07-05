@@ -26,9 +26,9 @@ foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Float -> Flo
 
 data Placement =     PointPlacement { pointIndex :: Int, onPointIndex :: Int } 
                    | BarPlacement { onBarIndex :: Int }
-                   | SidePlacement  { onSideIndex :: Int } deriving Show
+                   | SidePlacement  { onSideIndex :: Int } deriving (Show,Read)
 
-data Color = Black|White deriving (Eq, Show)
+data Color = Black|White deriving (Eq, Show, Read)
 data Point = Point { checkerColor :: Color
                    , checkerCount ::  Int
                    } deriving (Show)
@@ -57,8 +57,8 @@ pointXCoords = firstSix ++ secondSix where
     secondSix = take 6 [firstPastBar,firstPastBar+pointGap..]
 
 -- Used to determine where on the board a checker was dropped
-coordsToPointIndex :: Float -> Float -> Maybe Int
-coordsToPointIndex x y = 
+coordsToPlacement :: Game -> Float -> Float -> Maybe Placement
+coordsToPlacement (Game points _ _ _ _ _ _) x y =
     let 
         -- get the offset in "point count" from the left.
         lp = findIndex (\px -> abs (fromIntegral px - x) < 7) pointXCoords
@@ -69,7 +69,12 @@ coordsToPointIndex x y =
         -- Depends on whether selection is on bottom or top of board
         adjustment = if (y > fromIntegral midPoint) then (23-) else (0+) 
 
-    in fmap adjustment lp  -- fmap over Maybe
+        maybePointIndex = fmap adjustment lp  -- fmap over Maybe
+        maybeCheckerIndex = checkerCount <$> ((!!) points) <$> maybePointIndex
+
+    in case (maybePointIndex, maybeCheckerIndex) of  -- is there a better way to do this?
+        (Just pointIndex, Just checkerIndex) -> Just $ PointPlacement pointIndex checkerIndex
+        _ -> Nothing
 
 -- Convert from point/checker indices to appropriate center placement
 checkerPosition :: Placement -> (Int,Int)
@@ -112,7 +117,7 @@ animateToCheckerPosition circle placement = do
     jsAnimateCircle circle cx cy 300
 
 checkerPositionClass :: Placement -> String 
-checkerPositionClass (PointPlacement pi ci) = " pi" ++ show pi ++ " ci" ++ show ci 
+checkerPositionClass pl = map (\c -> if c==' ' then '_'; else c) $ show pl
 
 setCheckerClass :: MonadIO m => Elem -> Color -> Placement -> Color -> m ()
 setCheckerClass circle usersColor placement color = 
@@ -120,7 +125,7 @@ setCheckerClass circle usersColor placement color =
     where 
       svgCheckerClass color usersColor pl = 
           (if (usersColor == color ) then "draggable " else "") -- can only move your own checkers
-          ++ show color 
+          ++ show color ++ " "
           ++ checkerPositionClass pl
 
 getCheckerElement :: MonadIO m => Placement -> m Elem
@@ -145,16 +150,16 @@ drawPoint usersColor pointIndex (Point color count) =
 
 -- Create and draw all the checkers for a given side.
 -- Side is identified by color - white checkers go on left.
-drawBar :: Color -> Color -> Int -> IO ()
-drawBar color usersColor count  =
+drawSide :: Color -> Color -> Int -> IO ()
+drawSide color usersColor count  =
     sequence_ [drawChecker usersColor color (SidePlacement i) | i <- take count [0..]]
 
 -- Create and draw all the checkers sitting on both sides for a game.
 drawGame :: Game -> IO ()
 drawGame (Game points wos bos wob bob usersColor _) = do
         sequence_ $ map (uncurry (drawPoint usersColor)) $ zip [0..] points
-        -- drawBar White usersColor wos 
-        -- drawBar Black usersColor bos 
+        -- drawSide White usersColor wos 
+        -- drawSide Black usersColor bos 
 
 -- Given a game and a move, create the resulting new game.
 updateGame :: Game -> Int -> Int -> Game
@@ -185,24 +190,18 @@ dropCheckerCallback :: Game -> JSString -> Float -> Float -> IO ()
 dropCheckerCallback g@(Game points wos bos wob bob usersColor _) className x y = do
     let classes = words $ fromJSStr className
 
-        -- extract point index and checker index from class string
-        piString = drop 2 $ classes !! 2    -- "piXX"
-        ciString = drop 2 $ classes !! 3    -- "ciXX"
+        -- extract placement from classes
+        placementString =  map (\c -> if c=='_' then ' '; else c) (classes !! 2) 
+        oldPlacement = read placementString :: Placement
 
-        oldPoint = read piString :: Int
-        oldChecker = read ciString :: Int
-        oldPlacement = PointPlacement oldPoint oldChecker
+        oldColor =  read (classes !! 1) :: Color
 
-        -- convert placement coords to maybeNewPoint and maybeNewChecker
-        -- maybeNewPoint and maybeNewChecker are both: Maybe Int 
-        maybeNewPoint = coordsToPointIndex x y
-        maybeNewChecker = checkerCount <$> ((!!) points) <$> maybeNewPoint 
+        maybeNewPlacement = coordsToPlacement g x y
 
-    case (maybeNewPoint,maybeNewChecker) of
-        (Just newPoint, Just newChecker) -> do 
+    case (oldPlacement, maybeNewPlacement) of
+        ((PointPlacement oldPoint oldChecker), (Just (PointPlacement newPoint newChecker))) -> do 
 
             let newColor = checkerColor $ points !! newPoint
-                oldColor = checkerColor $ points !! oldPoint
                 newCount = checkerCount $ points !! newPoint
                 legalMove = newPoint > oldPoint && (newColor == oldColor || newCount < 2)
                 newPlacement = PointPlacement newPoint newChecker
