@@ -239,7 +239,8 @@ gameStart = zipWith whiteOrBlack whiteStart blackStart
              where whiteOrBlack (Point White 0) b = b
                    whiteOrBlack w@(Point White _) _ = w
 newGame :: Game
-newGame = Game gameStart (sum initialPointCounts) (sum initialPointCounts) 0 0 White White
+newGame = let checkerCount = sum initialPointCounts
+          in Game gameStart checkerCount checkerCount 0 0 White White
 
 setHint :: MonadIO m => String -> m ()
 setHint s = do
