@@ -256,12 +256,8 @@ newGame = let checkerCount = sum initialPointCounts
 
 setHint :: MonadIO m => String -> m ()
 setHint s = do
-        maybeElem <- elemById "HintText"
-        case maybeElem of
-            Just el -> do
-                setProp el "innerHTML" s
-            _ -> do
-                return ()
+        Just el <- elemById "HintText"
+        setProp el "innerHTML" s
 
 main :: IO ()
 main = do setHint "You have not joined a game (yet)."
