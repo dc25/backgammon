@@ -13,13 +13,6 @@ function handleMessage(event) {
     var chatLog = document.getElementById("transcript");
     chatLog.value = chatLog.value + event.data;
 }
-sharedKeyElement.onkeydown = function (e) {
-    if (e.keyCode == 13) {
-        initConnection();
-        return false; // don't do default action (refresh page)
-    }
-    return true; // do default action (display char)
-};
 chatInputElement.onkeydown = function (e) {
     if (e.keyCode == 13) {
         dc.send(chatInputElement.value);

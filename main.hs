@@ -229,16 +229,15 @@ dropCheckerCallback g@(Game points wos bos wob bob usersColor _) className x y =
         _ -> moveChecker oldPlacement oldPlacement usersColor
 
 clickedJoin :: MonadIO m => Int -> (Int, Int) -> m ()
-clickedJoin _ _ = liftIO $ showAlert_ffi $ toJSStr "Clicked Join"
+clickedJoin _ _ = do
+        Just skelem <- elemById "sharedKey" 
+        Just sk <- getValue skelem
+        liftIO $ showAlert_ffi sk
 
 setCallbacks :: MonadIO m => Game -> m ()
 setCallbacks g = do
-        maybeElem <- elemById "joinGame" 
-        case maybeElem of
-            Just el -> do
-                onEvent el OnClick clickedJoin
-                return ()
-            _ -> return ()
+        Just el <- elemById "joinGame" 
+        onEvent el OnClick clickedJoin
         liftIO $ setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback g)
 
 initialPointCounts = [2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0]
