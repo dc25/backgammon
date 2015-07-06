@@ -1,3 +1,4 @@
+import Haste
 import Haste.DOM
 import Haste.Prim
 import Control.Monad.IO.Class
@@ -11,7 +12,7 @@ import P2P
 -- javascript functionality
 
 -- debugging
-foreign import ccall placeAlert_ffi :: JSString -> IO ()
+foreign import ccall showAlert_ffi :: JSString -> IO ()
 foreign import ccall consoleLog_ffi :: JSString -> IO ()
 
 -- | Create an element in a namespace.
@@ -227,8 +228,18 @@ dropCheckerCallback g@(Game points wos bos wob bob usersColor _) className x y =
             else moveChecker oldPlacement oldPlacement usersColor
         _ -> moveChecker oldPlacement oldPlacement usersColor
 
-setCallbacks :: Game -> IO ()
-setCallbacks g = setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback g)
+clickedJoin :: MonadIO m => Int -> (Int, Int) -> m ()
+clickedJoin _ _ = liftIO $ showAlert_ffi $ toJSStr "Clicked Join"
+
+setCallbacks :: MonadIO m => Game -> m ()
+setCallbacks g = do
+        maybeElem <- elemById "joinGame" 
+        case maybeElem of
+            Just el -> do
+                onEvent el OnClick clickedJoin
+                return ()
+            _ -> return ()
+        liftIO $ setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback g)
 
 initialPointCounts = [2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0]
 whiteStart = [ Point White sc | sc <- initialPointCounts ]
@@ -248,7 +259,7 @@ setHint :: MonadIO m => String -> m ()
 setHint s = do
         maybeElem <- elemById "HintText"
         case maybeElem of
-            (Just el) -> setProp el "innerHTML" s
+            Just el -> setProp el "InnerHTML" s
             _ -> return ()
 
 main :: IO ()
