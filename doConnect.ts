@@ -33,7 +33,3 @@ chatInputElement.onkeydown = function( e ) {
     return true; // do default action (display char)
 }
 
-joinGameInputElement.onclick = function( e ) {
-    initConnection();
-    return false; 
-}
