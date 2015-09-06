@@ -1,5 +1,5 @@
-///<reference path="velocity-animate/velocity-animate.d.ts" />
-///<reference path="interactjs/interact.d.ts" />
+///<reference path="../DefinitelyTyped/velocity-animate/velocity-animate.d.ts" />
+///<reference path="../DefinitelyTyped/interactjs/interact.d.ts" />
 
 "use strict";
 
@@ -8,16 +8,6 @@
 // for details.
 var A:any;
 var B:any;
-
-// For debugging.
-function showAlert_ffi(msg:string) {
-    alert(msg);
-}
-
-// For debugging.
-function consoleLog_ffi(msg:string) {
-    console.log(msg);
-}
 
 var selectedElement:SVGElement = null;
 var currentX = 0;
@@ -70,10 +60,11 @@ var dropCheckerCallback;
 
 function deselectElement(evt) {
   if(selectedElement != null) {
-      B(A(dropCheckerCallback, [ [0,selectedElement.getAttribute("class")], 
-                                 [0,parseFloat(selectedElement.getAttribute("cx"))],
-                                 [0,parseFloat(selectedElement.getAttribute("cy"))],
-                                 0]));
+
+      dropCheckerCallback( selectedElement.getAttribute("class"), 
+                           parseFloat(selectedElement.getAttribute("cx")),
+                           parseFloat(selectedElement.getAttribute("cy")));
+
       selectedElement = null;
   }
 }

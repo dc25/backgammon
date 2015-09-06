@@ -32,7 +32,7 @@ animateCircleFFI = ffi "(function (elem, cx, cy, duration) {$(elem).velocity({ c
 jsAnimateCircle :: MonadIO m => Elem -> Int -> Int -> Int -> m ()
 jsAnimateCircle e cx cy duration = liftIO $ animateCircleFFI e cx cy duration
 
-setDropCheckerCallbackFFI :: Ptr (JSString -> Float -> Float -> IO ()) -> IO ()
+setDropCheckerCallbackFFI :: (String -> Float -> Float -> IO ()) -> IO ()
 setDropCheckerCallbackFFI = ffi "(function (cb) {setDropCheckerCallback_ffi(cb);})"
 
 data Placement =     PointPlacement { pointIndex :: Int, onPointIndex :: Int } 
@@ -207,9 +207,9 @@ fixCheckersAtPoint (Game points wos bos wob bob userColor _ ) pointIndex missing
     let moveIndices = drop 1 [missingCheckerIndex .. checkerCount (points !! pointIndex)]
     sequence_ [moveChecker (PointPlacement pointIndex i) (PointPlacement pointIndex (i-1)) userColor | i <- moveIndices ]
 
-dropCheckerCallback :: Game -> JSString -> Float -> Float -> IO ()
+dropCheckerCallback :: Game -> String -> Float -> Float -> IO ()
 dropCheckerCallback g@(Game points wos bos wob bob usersColor _) className x y = do
-    let classes = words $ fromJSStr className
+    let classes = words className
 
         -- extract placement from classes
         placementString =  map (\c -> if c=='_' then ' '; else c) (classes !! 2) 
@@ -246,7 +246,7 @@ setCallbacks :: MonadIO m => Game -> m ()
 setCallbacks g = do
         Just el <- elemById "joinGame" 
         liftIO $ onEvent el Click clickedJoin
-        liftIO $ setDropCheckerCallbackFFI $ toPtr (dropCheckerCallback g)
+        liftIO $ setDropCheckerCallbackFFI $ dropCheckerCallback g
 
 initialPointCounts = [2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0]
 whiteStart = [ Point White sc | sc <- initialPointCounts ]
