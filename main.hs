@@ -161,7 +161,7 @@ drawChecker usersColor color pl = do
     setAttr circle "r" (show checkerRadius)
     setCheckerPosition circle pl
     setCheckerClass circle usersColor pl color 
-    appendChild circle d
+    appendChild d circle 
 
 -- Create and draw all the checkers for a given point.
 drawPoint :: Color -> Int -> Point -> IO ()
