@@ -3,3 +3,8 @@
 *.o
 *.hi
 main/
+dist/
+.cabal-sandbox/
+Setup.hs
+*.cabal
+cabal.sandbox.config
