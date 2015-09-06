@@ -53,7 +53,10 @@ function moveElement(evt) {
 var dropCheckerCallback;
 function deselectElement(evt) {
     if (selectedElement != null) {
-        B(A(dropCheckerCallback, [[0, selectedElement.getAttribute("class")], [0, parseFloat(selectedElement.getAttribute("cx"))], [0, parseFloat(selectedElement.getAttribute("cy"))], 0]));
+        B(A(dropCheckerCallback, [[0, selectedElement.getAttribute("class")],
+            [0, parseFloat(selectedElement.getAttribute("cx"))],
+            [0, parseFloat(selectedElement.getAttribute("cy"))],
+            0]));
         selectedElement = null;
     }
 }
@@ -61,7 +64,8 @@ function deselectElement(evt) {
 function setDropCheckerCallback_ffi(cb) {
     dropCheckerCallback = cb;
     // target elements with the "draggable" class
-    interact('.draggable').draggable({
+    interact('.draggable')
+        .draggable({
         onstart: selectElement,
         onmove: moveElement,
         onend: deselectElement

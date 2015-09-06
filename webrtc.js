@@ -11,36 +11,22 @@ var DataConnection = (function () {
             iceServers: [{ url: "stun:23.21.150.121" }, { url: "stun:stun.l.google.com:19302" }]
         };
         this.peerConnection = new RTCPeerConnection(servers);
-        this.peerConnection.ondatachannel = function (event) {
-            _this.handleDataChannel(event);
-        };
+        this.peerConnection.ondatachannel = function (event) { _this.handleDataChannel(event); };
         // Enable sending of ICE candidates to peer.
-        this.peerConnection.onicecandidate = function (event) {
-            _this.handleICECandidate(event);
-        };
-        this.peerConnection.oniceconnectionstatechange = function () {
-            _this.handleICEConnectionStateChange();
-        };
+        this.peerConnection.onicecandidate = function (event) { _this.handleICECandidate(event); };
+        this.peerConnection.oniceconnectionstatechange = function () { _this.handleICEConnectionStateChange(); };
         this.dataChannel = this.peerConnection.createDataChannel("myDataChannel");
-        this.dataChannel.onopen = function () {
-            _this.handleDataChannelOpen();
-        };
+        this.dataChannel.onopen = function () { _this.handleDataChannelOpen(); };
         // Choose a random id
         this.id = Math.random().toString().replace(".", "");
         // Configure, connect, and set up Firebase
         // You probably want to replace the text below with your own Firebase URL
         this.database = new Firebase("https://pr100.firebaseio.com/");
         this.announceChannel = this.database.child(sharedKey);
-        this.announceChannel.on("child_added", function (snapshot) {
-            _this.handleAnnounceChannelMessage(snapshot);
-        });
-        this.announceChannel.once("value", function (snapshot) {
-            _this.handleAnnounceChannelValue(snapshot);
-        });
+        this.announceChannel.on("child_added", function (snapshot) { _this.handleAnnounceChannelMessage(snapshot); });
+        this.announceChannel.once("value", function (snapshot) { _this.handleAnnounceChannelValue(snapshot); });
         var signalChannel = this.database.child("messages").child(this.id);
-        signalChannel.on("child_added", function (snapshot) {
-            _this.handleSignalChannelMessage(snapshot);
-        });
+        signalChannel.on("child_added", function (snapshot) { _this.handleSignalChannelMessage(snapshot); });
         // Send a message to the announcement channel
         // If our partner is already waiting, they will send us a WebRTC offer
         // over our Firebase signalling channel and we can begin delegating WebRTC
@@ -77,11 +63,7 @@ var DataConnection = (function () {
             this.remoteId = message.id;
             if (this.existingAnnouncementsLoaded) {
                 // this announcement arrived after page loaded
-                this.peerConnection.createOffer(function (sd) {
-                    _this.handleCreateSDPSuccess(sd);
-                }, function (err) {
-                    _this.handleCreateSDPError(err);
-                });
+                this.peerConnection.createOffer(function (sd) { _this.handleCreateSDPSuccess(sd); }, function (err) { _this.handleCreateSDPError(err); });
             }
         }
     };
@@ -110,19 +92,12 @@ var DataConnection = (function () {
         if (message.type) {
             this.peerConnection.setRemoteDescription(new RTCSessionDescription(message));
             if (message.type === "offer") {
-                this.peerConnection.createAnswer(function (sd) {
-                    _this.handleCreateSDPSuccess(sd);
-                }, function (err) {
-                    _this.handleCreateSDPError(err);
-                });
+                this.peerConnection.createAnswer(function (sd) { _this.handleCreateSDPSuccess(sd); }, function (err) { _this.handleCreateSDPError(err); });
             }
         }
         else if (message.candidate) {
-            this.peerConnection.addIceCandidate(new RTCIceCandidate(message), function () {
-                console.log("peerConnection.addIceCandidate() success.");
-            }, function (errorInformation) {
-                console.log("peerConnection.addIceCandidate() error: ", DOMError);
-            } // error handler
+            this.peerConnection.addIceCandidate(new RTCIceCandidate(message), function () { console.log("peerConnection.addIceCandidate() success."); }, function (errorInformation) { console.log("peerConnection.addIceCandidate() error: ", DOMError); } // error handler
+             // error handler
             );
         }
         else {
@@ -166,9 +141,7 @@ var DataConnection = (function () {
     // We will bind to trigger a handler when an incoming message happens
     DataConnection.prototype.handleDataChannel = function (event) {
         var _this = this;
-        event.channel.onmessage = function (e) {
-            _this.handleDataChannelMessage(e);
-        };
+        event.channel.onmessage = function (e) { _this.handleDataChannelMessage(e); };
     };
     // This is called when the WebRTC sending data channel is offically "open"
     DataConnection.prototype.handleDataChannelOpen = function () {

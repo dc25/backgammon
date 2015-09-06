@@ -1,6 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
 import Haste
 import Haste.DOM
 import Haste.Prim
+import Haste.Foreign
+import Haste.Events
 import Control.Monad.IO.Class
 import Data.String
 import Data.List
@@ -12,20 +15,25 @@ import P2P
 -- javascript functionality
 
 -- debugging
-foreign import ccall showAlert_ffi :: JSString -> IO ()
-foreign import ccall consoleLog_ffi :: JSString -> IO ()
+showAlertFFI :: String-> IO ()
+showAlertFFI = ffi "(function (msg) { alert(msg); })"
+
+consoleLogFFI :: String-> IO ()
+consoleLogFFI = ffi "(function (msg) { console.log(msg); })"
 
 -- | Create an element in a namespace.
-foreign import ccall jsCreateElemNS :: JSString -> JSString -> IO Elem
-newElemNS :: MonadIO m => String -> String -> m Elem
-newElemNS ns tag = liftIO $ jsCreateElemNS  (toJSStr ns) (toJSStr tag)
+newElemNS :: String -> String -> IO Elem
+newElemNS = ffi "(function (ns,tag) {return document.createElementNS(ns, tag);})"
 
 -- | Slide a circle to the given location.  
-foreign import ccall animateCircle_ffi :: Elem -> Int -> Int -> Int -> IO ()
-jsAnimateCircle :: MonadIO m => Elem -> Int -> Int -> Int -> m ()
-jsAnimateCircle e cx cy duration = liftIO $ animateCircle_ffi e cx cy duration
+animateCircleFFI :: Elem -> Int -> Int -> Int -> IO ()
+animateCircleFFI = ffi "(function (elem, cx, cy, duration) {$(elem).velocity({ cx: cx, cy: cy }, { duration: duration });})"
 
-foreign import ccall setDropCheckerCallback_ffi :: Ptr (JSString -> Float -> Float -> IO ()) -> IO ()
+jsAnimateCircle :: MonadIO m => Elem -> Int -> Int -> Int -> m ()
+jsAnimateCircle e cx cy duration = liftIO $ animateCircleFFI e cx cy duration
+
+setDropCheckerCallbackFFI :: Ptr (JSString -> Float -> Float -> IO ()) -> IO ()
+setDropCheckerCallbackFFI = ffi "(function (cb) {setDropCheckerCallback_ffi(cb);})"
 
 data Placement =     PointPlacement { pointIndex :: Int, onPointIndex :: Int } 
                    | BarPlacement { onBarIndex :: Int }
@@ -153,7 +161,7 @@ drawChecker usersColor color pl = do
     setAttr circle "r" (show checkerRadius)
     setCheckerPosition circle pl
     setCheckerClass circle usersColor pl color 
-    addChild circle d
+    appendChild circle d
 
 -- Create and draw all the checkers for a given point.
 drawPoint :: Color -> Int -> Point -> IO ()
@@ -228,17 +236,17 @@ dropCheckerCallback g@(Game points wos bos wob bob usersColor _) className x y =
             else moveChecker oldPlacement oldPlacement usersColor
         _ -> moveChecker oldPlacement oldPlacement usersColor
 
-clickedJoin :: MonadIO m => Int -> (Int, Int) -> m ()
-clickedJoin _ _ = do
+clickedJoin :: MonadEvent m => EventData MouseEvent -> m ()
+clickedJoin _ = do
         Just skelem <- elemById "sharedKey" 
         Just sk <- getValue skelem
-        liftIO $ showAlert_ffi sk
+        liftIO $ showAlertFFI $ fromJSStr sk
 
 setCallbacks :: MonadIO m => Game -> m ()
 setCallbacks g = do
         Just el <- elemById "joinGame" 
-        onEvent el OnClick clickedJoin
-        liftIO $ setDropCheckerCallback_ffi $ toPtr (dropCheckerCallback g)
+        liftIO $ onEvent el Click clickedJoin
+        liftIO $ setDropCheckerCallbackFFI $ toPtr (dropCheckerCallback g)
 
 initialPointCounts = [2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0]
 whiteStart = [ Point White sc | sc <- initialPointCounts ]
