@@ -3,12 +3,6 @@
 
 "use strict";
 
-// A & B are required by haste for callbacks.  See: 
-// https://github.com/valderman/haste-compiler/blob/master/doc/js-externals.txt
-// for details.
-var A:any;
-var B:any;
-
 var selectedElement:SVGElement = null;
 var currentX = 0;
 var currentY = 0;

@@ -1,11 +1,6 @@
 ///<reference path="../DefinitelyTyped/velocity-animate/velocity-animate.d.ts" />
 ///<reference path="../DefinitelyTyped/interactjs/interact.d.ts" />
 "use strict";
-// A & B are required by haste for callbacks.  See: 
-// https://github.com/valderman/haste-compiler/blob/master/doc/js-externals.txt
-// for details.
-var A;
-var B;
 var selectedElement = null;
 var currentX = 0;
 var currentY = 0;
@@ -46,10 +41,6 @@ var dropCheckerCallback;
 function deselectElement(evt) {
     if (selectedElement != null) {
         dropCheckerCallback(selectedElement.getAttribute("class"), parseFloat(selectedElement.getAttribute("cx")), parseFloat(selectedElement.getAttribute("cy")));
-        // B(A(dropCheckerCallback, [ [0,selectedElement.getAttribute("class")], 
-        //                              [0,parseFloat(selectedElement.getAttribute("cx"))],
-        //                              [0,parseFloat(selectedElement.getAttribute("cy"))],
-        //                              0]));
         selectedElement = null;
     }
 }
