@@ -29,9 +29,6 @@ newElemNS = ffi "(function (ns,tag) {return document.createElementNS(ns, tag);})
 animateCircleFFI :: Elem -> Int -> Int -> Int -> IO ()
 animateCircleFFI = ffi "(function (elem, cx, cy, duration) {$(elem).velocity({ cx: cx, cy: cy }, { duration: duration });})"
 
-jsAnimateCircle :: MonadIO m => Elem -> Int -> Int -> Int -> m ()
-jsAnimateCircle e cx cy duration = liftIO $ animateCircleFFI e cx cy duration
-
 setDropCheckerCallbackFFI :: (String -> Float -> Float -> IO ()) -> IO ()
 setDropCheckerCallbackFFI = ffi "(function (cb) {setDropCheckerCallback_ffi(cb);})"
 
@@ -123,7 +120,7 @@ checkerPosition (RightSidePlacement checkerIndex) =
 
 -- Given a checker element, move it to the spot specified
 -- by the pointIndex and checkerIndex.
-setCheckerPosition :: MonadIO m => Elem -> Placement -> m ()
+setCheckerPosition :: Elem -> Placement -> IO ()
 setCheckerPosition circle placement = do
     let (cx,cy) = checkerPosition placement
     setAttr circle "cx" $ show cx
@@ -131,15 +128,15 @@ setCheckerPosition circle placement = do
 
 -- Given a checker element, move it to the spot specified
 -- by the pointIndex and checkerIndex.
-animateToCheckerPosition :: MonadIO m => Elem -> Placement -> m ()
+animateToCheckerPosition :: Elem -> Placement -> IO ()
 animateToCheckerPosition circle placement = do
     let (cx,cy) = checkerPosition placement
-    jsAnimateCircle circle cx cy 300
+    animateCircleFFI circle cx cy 300
 
 checkerPositionClass :: Placement -> String 
 checkerPositionClass pl = map (\c -> if c==' ' then '_'; else c) $ show pl
 
-setCheckerClass :: MonadIO m => Elem -> Color -> Placement -> Color -> m ()
+setCheckerClass :: Elem -> Color -> Placement -> Color -> IO ()
 setCheckerClass circle usersColor placement color = 
     setAttr circle "class" (svgCheckerClass color usersColor placement) 
     where 
@@ -148,7 +145,7 @@ setCheckerClass circle usersColor placement color =
           ++ show color ++ " "
           ++ checkerPositionClass pl
 
-getCheckerElement :: MonadIO m => Placement -> m Elem
+getCheckerElement :: Placement -> IO Elem
 getCheckerElement pl = do
     elems <- elemsByClass $ checkerPositionClass pl
     return $ head elems
@@ -195,14 +192,14 @@ updateGame g@(Game points wos bos wob bob _ _) iFrom iTo =
     in g {gamePoints = map (doMove iFrom iTo) (zip [0..] points) }
 
 -- Given a game and a move, create the resulting new game.
-moveChecker :: MonadIO m => Placement -> Placement -> Color -> m ()
+moveChecker :: Placement -> Placement -> Color -> IO ()
 moveChecker oldPlacement newPlacement color = do
     checker <- getCheckerElement oldPlacement
     animateToCheckerPosition checker newPlacement
     setCheckerClass checker color newPlacement color
 
 -- slide all of the checkers at a given point together.
-fixCheckersAtPoint :: MonadIO m => Game -> Int -> Int -> m ()
+fixCheckersAtPoint :: Game -> Int -> Int -> IO ()
 fixCheckersAtPoint (Game points wos bos wob bob userColor _ ) pointIndex missingCheckerIndex = do
     let moveIndices = drop 1 [missingCheckerIndex .. checkerCount (points !! pointIndex)]
     sequence_ [moveChecker (PointPlacement pointIndex i) (PointPlacement pointIndex (i-1)) userColor | i <- moveIndices ]
@@ -242,11 +239,11 @@ clickedJoin _ = do
         Just sk <- getValue skelem
         liftIO $ showAlertFFI $ fromJSStr sk
 
-setCallbacks :: MonadIO m => Game -> m ()
+setCallbacks :: Game -> IO ()
 setCallbacks g = do
         Just el <- elemById "joinGame" 
-        liftIO $ onEvent el Click clickedJoin
-        liftIO $ setDropCheckerCallbackFFI $ dropCheckerCallback g
+        onEvent el Click clickedJoin
+        setDropCheckerCallbackFFI $ dropCheckerCallback g
 
 initialPointCounts = [2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0]
 whiteStart = [ Point White sc | sc <- initialPointCounts ]
@@ -262,7 +259,7 @@ newGame :: Game
 newGame = let checkerCount = sum initialPointCounts
           in Game gameStart checkerCount checkerCount 0 0 White White
 
-setHint :: MonadIO m => String -> m ()
+setHint :: String -> IO ()
 setHint s = do
         Just el <- elemById "HintText"
         setProp el "innerHTML" s
