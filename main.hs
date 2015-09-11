@@ -177,8 +177,8 @@ drawGame (Game points wos bos wob bob usersColor _) = do
         -- drawSide Black bos 
 
 -- Given a game and a move, create the resulting new game.
-updateGame :: Game -> Int -> Int -> Game
-updateGame g@(Game points _ _ _ _ _ _) iFrom iTo = 
+updateGame :: Game -> Placement -> Placement -> Game
+updateGame g@(Game points _ _ _ _ _ _) pFrom@(PointPlacement iFrom oldChecker) pTo@(PointPlacement iTo _) =
     -- could this be improved with lens?
     let fromColor = checkerColor $ points !! iFrom
         doMove f t (i,pt)
@@ -216,14 +216,14 @@ dropCheckerCallback g@(Game points wos bos wob bob _ _) className x y = do
         maybeNewPlacement = coordsToPlacement g x y
 
     case (oldPlacement, maybeNewPlacement) of
-        (PointPlacement oldPoint oldChecker, Just newPlacement@(PointPlacement newPoint newChecker)) -> do 
+        (PointPlacement oldPoint oldChecker, Just newPlacement@(PointPlacement newPoint _)) -> do 
 
             let newColor = checkerColor $ points !! newPoint
                 newCount = checkerCount $ points !! newPoint
                 legalMove = newPoint > oldPoint && (newColor == oldColor || newCount < 2)
 
             if legalMove then do
-                let newGame = updateGame g oldPoint newPoint
+                let newGame = updateGame g oldPlacement newPlacement 
                 moveChecker oldPlacement newPlacement oldColor
                 fixCheckersAtPoint newGame oldPoint oldChecker
                 setCallbacks newGame
