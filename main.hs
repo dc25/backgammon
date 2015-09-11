@@ -136,12 +136,12 @@ animateToCheckerPosition circle placement = do
 checkerPositionClass :: Placement -> String 
 checkerPositionClass pl = map (\c -> if c==' ' then '_'; else c) $ show pl
 
-setCheckerClass :: Elem -> Color -> Placement -> Color -> IO ()
-setCheckerClass circle usersColor placement color = 
+setCheckerClass :: Elem -> Color -> Bool -> Placement -> IO ()
+setCheckerClass circle color draggable placement = 
     setAttr circle "class" (svgCheckerClass color usersColor placement) 
     where 
       svgCheckerClass color usersColor pl = 
-          (if usersColor == color then "draggable " else "") -- can only move your own checkers
+          (if draggable then "draggable " else "") 
           ++ show color ++ " "
           ++ checkerPositionClass pl
 
@@ -151,26 +151,27 @@ getCheckerElement pl = do
     return $ head elems
 
 -- Create and place a single checker on specified point
-drawChecker :: Color -> Color -> Placement -> IO ()
-drawChecker usersColor color pl = do
+drawChecker :: Color -> Bool -> Placement -> IO ()
+drawChecker color draggable pl = do
     Just d <- elemById "board" 
     circle <- newElemNS "http://www.w3.org/2000/svg" "circle"
     setAttr circle "r" (show checkerRadius)
     setCheckerPosition circle pl
-    setCheckerClass circle usersColor pl color 
+    setCheckerClass circle color draggable pl
     appendChild d circle 
 
 -- Create and draw all the checkers for a given point.
 drawPoint :: Color -> Int -> Point -> IO ()
-drawPoint usersColor pointIndex (Point color count) =
-    sequence_ [drawChecker usersColor color (PointPlacement pointIndex checkerIndex) | checkerIndex <- take count [0..]]
+drawPoint usersColor pointIndex (Point pointColor pointCount) =
+    let draggable = usersColor == pointColor
+    in sequence_ [drawChecker pointColor draggable (PointPlacement pointIndex checkerIndex) | checkerIndex <- take pointCount [0..]]
 
 -- Create and draw all the checkers for a given side.
 -- Side is identified by color - white checkers go on left.
 drawSide :: Color -> Color -> Int -> IO ()
 drawSide color usersColor count  =
     let pl = if color == White then LeftSidePlacement else RightSidePlacement
-    in sequence_ [drawChecker usersColor color (pl i) | i <- take count [0..]]
+    in sequence_ [drawChecker color True (pl i) | i <- take count [0..]]
 
 -- Create and draw all the checkers sitting on both sides for a game.
 drawGame :: Game -> IO ()
@@ -196,7 +197,7 @@ moveChecker :: Placement -> Placement -> Color -> IO ()
 moveChecker oldPlacement newPlacement color = do
     checker <- getCheckerElement oldPlacement
     animateToCheckerPosition checker newPlacement
-    setCheckerClass checker color newPlacement color
+    setCheckerClass checker color True newPlacement 
 
 -- slide all of the checkers at a given point together.
 fixCheckersAtPoint :: Game -> Int -> Int -> IO ()
@@ -227,11 +228,11 @@ dropCheckerCallback g@(Game points wos bos wob bob usersColor _) className x y =
 
             if legalMove then do
                 let newGame = updateGame g oldPoint newPoint
-                moveChecker oldPlacement newPlacement usersColor
+                moveChecker oldPlacement newPlacement oldColor
                 fixCheckersAtPoint newGame oldPoint oldChecker
                 setCallbacks newGame
-            else moveChecker oldPlacement oldPlacement usersColor
-        _ -> moveChecker oldPlacement oldPlacement usersColor
+            else moveChecker oldPlacement oldPlacement oldColor
+        _ -> moveChecker oldPlacement oldPlacement oldColor
 
 clickedJoin :: MonadEvent m => EventData MouseEvent -> m ()
 clickedJoin _ = do
