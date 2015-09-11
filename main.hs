@@ -138,12 +138,8 @@ checkerPositionClass pl = map (\c -> if c==' ' then '_'; else c) $ show pl
 
 setCheckerClass :: Elem -> Color -> Bool -> Placement -> IO ()
 setCheckerClass circle color draggable placement = 
-    setAttr circle "class" (svgCheckerClass color usersColor placement) 
-    where 
-      svgCheckerClass color usersColor pl = 
-          (if draggable then "draggable " else "") 
-          ++ show color ++ " "
-          ++ checkerPositionClass pl
+    let classAttr = (if draggable then "draggable " else "") ++ show color ++ " " ++ checkerPositionClass placement
+    in setAttr circle "class" classAttr
 
 getCheckerElement :: Placement -> IO Elem
 getCheckerElement pl = do
@@ -168,21 +164,21 @@ drawPoint usersColor pointIndex (Point pointColor pointCount) =
 
 -- Create and draw all the checkers for a given side.
 -- Side is identified by color - white checkers go on left.
-drawSide :: Color -> Color -> Int -> IO ()
-drawSide color usersColor count  =
+drawSide :: Color -> Int -> IO ()
+drawSide color count  =
     let pl = if color == White then LeftSidePlacement else RightSidePlacement
     in sequence_ [drawChecker color True (pl i) | i <- take count [0..]]
 
 -- Create and draw all the checkers sitting on both sides for a game.
 drawGame :: Game -> IO ()
 drawGame (Game points wos bos wob bob usersColor _) = do
-        -- sequence_ $ zipWith (drawPoint usersColor) [0 ..] points
-        drawSide White usersColor wos 
-        drawSide Black usersColor bos 
+        sequence_ $ zipWith (drawPoint usersColor) [0 ..] points
+        -- drawSide White wos 
+        -- drawSide Black bos 
 
 -- Given a game and a move, create the resulting new game.
 updateGame :: Game -> Int -> Int -> Game
-updateGame g@(Game points wos bos wob bob _ _) iFrom iTo = 
+updateGame g@(Game points _ _ _ _ _ _) iFrom iTo = 
     -- could this be improved with lens?
     let fromColor = checkerColor $ points !! iFrom
         doMove f t (i,pt)
@@ -206,7 +202,7 @@ fixCheckersAtPoint (Game points wos bos wob bob userColor _ ) pointIndex missing
     sequence_ [moveChecker (PointPlacement pointIndex i) (PointPlacement pointIndex (i-1)) userColor | i <- moveIndices ]
 
 dropCheckerCallback :: Game -> String -> Float -> Float -> IO ()
-dropCheckerCallback g@(Game points wos bos wob bob usersColor _) className x y = do
+dropCheckerCallback g@(Game points wos bos wob bob _ _) className x y = do
     let classes = words className
 
         -- extract placement from classes
