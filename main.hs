@@ -171,14 +171,14 @@ drawSide color count  =
 
 -- Create and draw all the checkers sitting on both sides for a game.
 drawGame :: Game -> IO ()
-drawGame (Game points wos bos wob bob usersColor _) = do
+drawGame (Game points wos bos _ _ usersColor _) = do
         sequence_ $ zipWith (drawPoint usersColor) [0 ..] points
         -- drawSide White wos 
         -- drawSide Black bos 
 
 -- Given a game and a move, create the resulting new game.
 updateGame :: Game -> Placement -> Placement -> Game
-updateGame g@(Game points _ _ _ _ _ _) pFrom@(PointPlacement iFrom oldChecker) pTo@(PointPlacement iTo _) =
+updateGame g@(Game points _ _ _ _ _ _) pFrom@(PointPlacement iFrom _) pTo@(PointPlacement iTo _) =
     -- could this be improved with lens?
     let fromColor = checkerColor $ points !! iFrom
         doMove f t (i,pt)
@@ -188,47 +188,48 @@ updateGame g@(Game points _ _ _ _ _ _) pFrom@(PointPlacement iFrom oldChecker) p
                 
     in g {gamePoints = map (doMove iFrom iTo) (zip [0..] points) }
 
+legalMove :: Game -> Placement -> Placement -> Bool
+legalMove g@(Game points _ _ _ _ _ _) pFrom@(PointPlacement iFrom _) pTo@(PointPlacement iTo _) =
+    let newColor = checkerColor $ points !! iTo
+        newCount = checkerCount $ points !! iTo
+        oldColor = checkerColor $ points !! iFrom
+    in iTo > iFrom && (newColor == oldColor || newCount < 2)
+
 -- Given a game and a move, create the resulting new game.
-moveChecker :: Placement -> Placement -> Color -> IO ()
-moveChecker oldPlacement newPlacement color = do
-    checker <- getCheckerElement oldPlacement
-    animateToCheckerPosition checker newPlacement
-    setCheckerClass checker color True newPlacement 
+moveChecker :: Game -> Placement -> Placement -> IO ()
+moveChecker g@(Game points _ _ _ _ _ _) pFrom@(PointPlacement iFrom _) pTo@(PointPlacement iTo _) = do
+    let color = checkerColor $ points !! iFrom
+    checker <- getCheckerElement pFrom
+    animateToCheckerPosition checker pTo
+    setCheckerClass checker color True pTo
 
 -- slide all of the checkers at a given point together.
-fixCheckersAtPoint :: Game -> Int -> Int -> IO ()
-fixCheckersAtPoint (Game points wos bos wob bob userColor _ ) pointIndex missingCheckerIndex = do
+adjustForRemovedChecker :: Game -> Placement -> IO ()
+adjustForRemovedChecker g@(Game points _ _ _ _ _ _) pFrom@(PointPlacement pointIndex missingCheckerIndex) = do
     let moveIndices = drop 1 [missingCheckerIndex .. checkerCount (points !! pointIndex)]
-    sequence_ [moveChecker (PointPlacement pointIndex i) (PointPlacement pointIndex (i-1)) userColor | i <- moveIndices ]
+    sequence_ [moveChecker g (PointPlacement pointIndex i) (PointPlacement pointIndex (i-1)) | i <- moveIndices ]
 
 dropCheckerCallback :: Game -> String -> Float -> Float -> IO ()
-dropCheckerCallback g@(Game points wos bos wob bob _ _) className x y = do
+dropCheckerCallback g className x y = do
     let classes = words className
 
         -- extract placement from classes
         placementString =  map (\c -> if c=='_' then ' '; else c) (classes !! 2) 
         oldPlacement = read placementString :: Placement
 
-        -- extract color from classes
-        oldColor =  read (classes !! 1) :: Color
-
         -- Get new placement from mouse pick coords
         maybeNewPlacement = coordsToPlacement g x y
 
     case (oldPlacement, maybeNewPlacement) of
-        (PointPlacement oldPoint oldChecker, Just newPlacement@(PointPlacement newPoint _)) -> do 
+        (PointPlacement _ _, Just newPlacement) -> do 
 
-            let newColor = checkerColor $ points !! newPoint
-                newCount = checkerCount $ points !! newPoint
-                legalMove = newPoint > oldPoint && (newColor == oldColor || newCount < 2)
-
-            if legalMove then do
+            if legalMove g oldPlacement newPlacement then do
+                moveChecker g oldPlacement newPlacement 
                 let newGame = updateGame g oldPlacement newPlacement 
-                moveChecker oldPlacement newPlacement oldColor
-                fixCheckersAtPoint newGame oldPoint oldChecker
+                adjustForRemovedChecker newGame oldPlacement
                 setCallbacks newGame
-            else moveChecker oldPlacement oldPlacement oldColor
-        _ -> moveChecker oldPlacement oldPlacement oldColor
+            else moveChecker g oldPlacement oldPlacement 
+        _ -> moveChecker g oldPlacement oldPlacement 
 
 clickedJoin :: MonadEvent m => EventData MouseEvent -> m ()
 clickedJoin _ = do
